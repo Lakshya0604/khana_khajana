@@ -14,6 +14,7 @@ import { FaCreditCard } from "react-icons/fa";
 import axios from 'axios';
 import { serverUrl } from '../App';
 import { addMyOrder } from '../redux/userSlice';
+import { ClipLoader } from 'react-spinners';
 
 
 function RecenterMap({ location }) {
@@ -32,6 +33,7 @@ const CheckOut = () => {
     const { cartItems, totalAmount, userData } = useSelector(state => state.user)
     const [addressInput, setAddressInput] = useState("")
     const [paymentMethod, setPaymentMethod] = useState("cod")
+    const [loading, setLoading] = useState(false)
     const dispatch = useDispatch()
     const deliveryFee = totalAmount > 500 ? 0 : 40
     const amountWithDeliveryFee = totalAmount + deliveryFee
@@ -73,6 +75,7 @@ const CheckOut = () => {
     }
 
     const handlePlaceOrder = async () => {
+        setLoading(true)
         try {
             const result = await axios.post(`${serverUrl}/api/order/place-order`, {
                 paymentMethod, deliveryAddress: {
@@ -91,9 +94,11 @@ const CheckOut = () => {
                 const orderId = result.data.orderId
                 const razorOrder = result.data.razorOrder
                 openRazorpayWindow(orderId, razorOrder)
+                setLoading(false)
             }
         } catch (error) {
             console.log(error)
+            setLoading(false)
         }
     }
 
@@ -212,7 +217,10 @@ const CheckOut = () => {
                     </div>
                 </section>
                 <button className='w-full bg-[#ff4d2d] hover:[#e64526] text-white py-3 rounded-xl font-semibold'
-                    onClick={handlePlaceOrder}>{paymentMethod == "cod" ? "Place Order" : "Pay & Place Order"}</button>
+                    onClick={handlePlaceOrder}>
+                    {loading ? (<ClipLoader size={20} color='#ffffff' />) : (paymentMethod == "cod" ? "Place Order" : "Pay & Place Order")}
+
+                </button>
             </div>
         </div>
 

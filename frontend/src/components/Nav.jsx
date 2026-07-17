@@ -166,13 +166,13 @@ const Nav = () => {
                         <>
                             <button
                                 onClick={() => setSearchOpen(!searchOpen)}
-                                className='w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600'
+                                className='w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 cursor-pointer'
                             >
                                 {searchOpen ? <RiCloseLine size={18} /> : <CiSearch size={18} />}
                             </button>
                             <button className='relative w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600'>
-                                <IoCartOutline size={18} onClick={() => navigate("/my-orders")} />
-                                <span className='absolute -top-1 -right-1 bg-[#ff4d2d] text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full'>0</span>
+                                <IoCartOutline className='cursor-pointer' size={18} onClick={() => navigate("/cart")} />
+                                <span className='absolute -top-1 -right-1 bg-[#ff4d2d] text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full'>{cartItems.length}</span>
                             </button>
                         </>
                     )}
@@ -222,10 +222,6 @@ const Nav = () => {
                 <div className='md:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-2'>
                     {userData?.role === "user" && (
                         <>
-                            <button className='flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 w-full text-left'>
-                                <IoCartOutline size={18} className='text-[#ff4d2d]' />
-                                Cart
-                            </button>
                             <button className='flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-sm font-medium text-orange-400 w-full text-left' onClick={() => navigate("/my-orders")}>
                                 <FiUser size={18} />
                                 My Orders

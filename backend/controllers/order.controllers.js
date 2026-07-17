@@ -199,6 +199,7 @@ export const getMyOrders = async (req, res) => {
         return res.status(500).json({ message: "get user order error", error: error.message })
     }
 }
+
 export const updateOrderStatus = async (req, res) => {
     try {
         const { orderId, shopId } = req.params
@@ -214,8 +215,11 @@ export const updateOrderStatus = async (req, res) => {
         }
         shopOrder.status = status
         let deliveryBoysPayload = []
+
+
         if (status == "out of delivery" && !shopOrder.assignment) {
             const { longitude, latitude } = order.deliveryAddress
+
             const nearByDeliveryBoys = await User.find({
                 role: "deliveryBoy",
                 location: {
@@ -225,6 +229,7 @@ export const updateOrderStatus = async (req, res) => {
                     }
                 }
             })
+
             const nearByIds = nearByDeliveryBoys.map(b => b._id)
             const busyIds = await DeliveryAssignment.find({
                 assignedTo: { $in: nearByIds },
@@ -246,7 +251,6 @@ export const updateOrderStatus = async (req, res) => {
                 brodcastedTo: candidates,
                 status: "brodcasted"
             })
-            shopOrder.assignedDeliveryBoy = deliveryAssignment.assignedTo
             shopOrder.assignment = deliveryAssignment._id
             deliveryBoysPayload = availableBoys.map(b => ({
                 id: b._id,
@@ -262,6 +266,7 @@ export const updateOrderStatus = async (req, res) => {
             if (io) {
                 availableBoys.forEach(boy => {
                     const boySocketId = boy.socketId
+
                     if (boySocketId) {
                         io.to(boySocketId).emit('newAssignment', {
                             sentTo: boy._id,
@@ -339,16 +344,29 @@ export const getDeliveryBoyAssignment = async (req, res) => {
             .populate("order")
             .populate("shop")
 
-        const formated = assignments.map(a => ({
-            assignmentId: a._id,
-            orderId: a.order._id,
-            shopName: a.shop.name,
-            deliveryAddress: a.order.deliveryAddress,
-            items: a.order.shopOrders.find(so => so._id.equals(a.shopOrderId)).shopOrderItems || [],
-            subTotal: a.order.shopOrders.find(so => so._id.equals(a.shopOrderId))?.subTotal
-        }))
+        const formated = assignments.reduce((result, a) => {
+            if (!a.order) {
+                console.error('getDeliveryBoyAssignment: assignment has no order', a._id)
+                return result
+            }
+            const shopOrder = a.order.shopOrders?.find(so => so._id?.equals(a.shopOrderId))
+            if (!shopOrder) {
+                console.error('getDeliveryBoyAssignment: shopOrder not found for assignment', a._id, a.shopOrderId)
+                return result
+            }
+            result.push({
+                assignmentId: a._id,
+                orderId: a.order._id,
+                shopName: a.shop?.name || "",
+                deliveryAddress: a.order.deliveryAddress,
+                items: shopOrder.shopOrderItems || [],
+                subTotal: shopOrder?.subTotal || 0
+            })
+            return result
+        }, [])
         return res.status(200).json(formated)
     } catch (error) {
+        console.error('getDeliveryBoyAssignment error:', error)
         return res.status(500).json({ message: "get assignment error", error: error.message })
     }
 }
@@ -383,11 +401,9 @@ export const acceptOrder = async (req, res) => {
         shopOrder.assignedDeliveryBoy = req.userId
         await order.save()
 
-        // Emit assignment accepted event to owner and user so UIs update in realtime
         try {
             const io = req.app.get('io')
             if (io) {
-                // get updated order with user and shopOrders populated
                 await order.populate({ path: 'shopOrders.owner', model: 'User', select: 'socketId fullname mobile' })
                 await order.populate('user', 'socketId fullname')
 
@@ -397,12 +413,15 @@ export const acceptOrder = async (req, res) => {
                 const userSocketId = order.user?.socketId
                 const ownerSocketId = owner?.socketId
 
+                const deliveryBoy = await User.findById(req.userId).select('fullname mobile')
                 const payload = {
                     orderId: order._id,
                     shopId: shopOrderAfter.shop,
                     assignmentId: assignment._id,
                     assignedDeliveryBoy: {
-                        id: req.userId
+                        _id: req.userId,
+                        fullname: deliveryBoy?.fullname,
+                        mobile: deliveryBoy?.mobile
                     }
                 }
 
@@ -412,7 +431,6 @@ export const acceptOrder = async (req, res) => {
                 if (userSocketId) {
                     io.to(userSocketId).emit('assignmentAccepted', payload)
                 }
-                // also emit to all as fallback
                 if (!ownerSocketId && !userSocketId) {
                     io.emit('assignmentAccepted', payload)
                 }
@@ -439,10 +457,11 @@ export const getCurrentOrder = async (req, res) => {
                 populate: [{ path: "user", select: "fullname email location mobile" }]
             })
         if (!assignment) {
-            return res.status(400).json({ message: "assignment not found" })
+            return res.json(null)
         }
         if (!assignment.order) {
-            return res.status(400).json({ message: "order not found" })
+            await DeliveryAssignment.deleteOne({ _id: assignment._id })
+            return res.json(null)
         }
         const shopOrder = assignment.order.shopOrders.find(so => String(so._id) == String(assignment.shopOrderId))
         if (!shopOrder) {

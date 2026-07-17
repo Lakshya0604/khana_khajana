@@ -58,13 +58,18 @@ const OwnerOrderCard = ({ data }) => {
             </div>
             {data.shopOrders.status == "out of delivery" &&
                 <div className='mt-3 p-2 border rounded-lg text-sm bg-orange-50'>
-                    {data.shopOrders.assignedDeliveryBoy ? <p>Assigned Delivery Boys : </p> : <p>Available Delivery Boys</p>}
-                    {!availableBoys ? null :
+                    {data.shopOrders.assignedDeliveryBoy ? <p>Assigned Delivery Boy:</p> : <p>Available Delivery Boys</p>}
+                    {data.shopOrders.assignedDeliveryBoy ? (
+                        <div className='text-gray-500'>
+                            {data.shopOrders.assignedDeliveryBoy.fullname} is your Delivery Boy. Contact Number: {data.shopOrders.assignedDeliveryBoy.mobile}
+                        </div>
+                    ) : availableBoys ? (
                         availableBoys.length > 0 ? (
                             availableBoys.map((b, index) => (
-                                <div className='text-gray-500 '>{b.fullname}-{b.mobile}</div>
+                                <div key={index} className='text-gray-500'>{b.fullname} - {b.mobile}</div>
                             ))
-                        ) : data.shopOrders.assignedDeliveryBoy ? <div>{data.shopOrders.assignedDeliveryBoy.fullname} is your Delivery Boy .  Contact Number : {data.shopOrders.assignedDeliveryBoy.mobile}</div> : <div>Waiting for  Delivery Boys  to accept </div>}
+                        ) : <div>Waiting for delivery boys to accept</div>
+                    ) : <div>Waiting for delivery boys to accept</div>}
                 </div>}
             <div className='text-right font-bold text-gray-800 text-sm'>
                 Total : ₹{data.shopOrders.subTotal}

@@ -122,27 +122,26 @@ const DeliveryBoy = () => {
     }
 
     useEffect(() => {
-        socket?.on('newAssignment', (data) => {
-            if (data.sentTo == userData._id) {
-                setAvailableAssignment(prev => [...prev, data])
+        if (!socket || !userData) return
+
+        socket.on('newAssignment', (data) => {
+            if (String(data.sentTo) === String(userData._id)) {
+                setAvailableAssignment(prev => [ ...(prev || []), data ])
             }
         })
-        socket?.on('assignmentAccepted', (data) => {
+        socket.on('assignmentAccepted', (data) => {
             console.log('socket assignmentAccepted received (delivery):', data)
-            const { orderId, shopId, assignedDeliveryBoy, assignmentId } = data
-            if (assignedDeliveryBoy && assignedDeliveryBoy._id == userData._id) {
-                // set current order if this delivery boy is assigned
-                // backend may send currentOrder payload; if not, fetch current order
+            const assignedId = data?.assignedDeliveryBoy?._id || data?.assignedDeliveryBoy?.id
+            if (assignedId && String(assignedId) === String(userData._id)) {
                 getCurrentOrder()
-                // remove accepted assignment from available list
-                setAvailableAssignment(prev => prev ? prev.filter(a => a.assignmentId !== assignmentId) : prev)
+                setAvailableAssignment(prev => prev ? prev.filter(a => a.assignmentId !== data.assignmentId) : [])
             }
         })
         return () => {
-            socket?.off('newAssignment')
-            socket?.off('assignmentAccepted')
+            socket.off('newAssignment')
+            socket.off('assignmentAccepted')
         }
-    }, [socket])
+    }, [socket, userData])
 
     useEffect(() => {
         getAssignments()
@@ -201,25 +200,25 @@ const DeliveryBoy = () => {
                 {currentOrder && <div className='bg-white rounded-2xl p-5 shadow-md w-[90%] border border-orange-100'>
                     <h2 className='text-lg font-bold mb-3'>📦Current Order</h2>
                     <div className='border rounded-lg p-4 mb-3 '>
-                        <p className='font-semibold text-sm'>{currentOrder?.shopOrder.shop.name}</p>
-                        <p className='text-sm text-gray-500'>{currentOrder?.deliveryAddress.text}</p>
-                        <p className='text-xs text-gray-600'>{currentOrder.shopOrder.shopOrderItems.length} items | {currentOrder.shopOrder.subTotal}</p>
+                        <p className='font-semibold text-sm'>{currentOrder?.shopOrder?.shop.name}</p>
+                        <p className='text-sm text-gray-500'>{currentOrder?.deliveryAddress?.text}</p>
+                        <p className='text-xs text-gray-600'>{currentOrder?.shopOrder?.shopOrderItems.length} items | {currentOrder?.shopOrder?.subTotal}</p>
                     </div>
                     <DeliveryBoyTracking data={{
                         deliveryBoyLocation: deliveryBoyLocation || {
-                            lat: userData.location.coordinates[1],
-                            lon: userData.location.coordinates[0]
+                            lat: userData?.location?.coordinates[1],
+                            lon: userData?.location?.coordinates[0]
                         },
                         customerLocation: {
-                            lat: currentOrder.deliveryAddress.latitude,
-                            lon: currentOrder.deliveryAddress.longitude
+                            lat: currentOrder?.deliveryAddress?.latitude,
+                            lon: currentOrder?.deliveryAddress?.longitude
                         }
                     }} />
                     {!showOtpBox ? <button className='mt-4 w-full bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 active:scale-95 transition-all duration-200 cursor-pointer' onClick={sendOtp} disabled={loading}>
                         {loading ? <ClipLoader size={20} color='white' /> : "Mark as delivered"}
                     </button> : <div className='mt-4 p-4 rounded-xl bg-gray-50'>
                         <p className='text-sm font-semibold mb-2'>
-                            Enter Otp send to <span className='text-orange-500'>{currentOrder.user.fullname}</span>
+                            Enter Otp send to <span className='text-orange-500'>{currentOrder?.user?.fullname}</span>
                         </p>
                         <input type="text" className='w-full border px-3 py-2 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-orange-400' placeholder='Enter Otp' onChange={(e) => setOtp(e.target.value)} value={otp} />
                         {message && <p className='text-center text-green-400'>{message}</p>}
