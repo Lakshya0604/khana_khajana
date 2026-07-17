@@ -24,7 +24,8 @@ import { useEffect } from 'react'
 import { io } from 'socket.io-client'
 import { setSocket } from './redux/userSlice'
 
-export const serverUrl = "https://khana-khajana-backend-pp6z.onrender.com"
+export const serverUrl = ""
+export const socketUrl = "https://khana-khajana-backend-pp6z.onrender.com"
 
 function App() {
   useGetCurrentUser()
@@ -40,7 +41,7 @@ function App() {
 
 
   useEffect(() => {
-    const socketInstance = io(serverUrl, { withCredentials: true })
+    const socketInstance = io(socketUrl, { withCredentials: true })
     dispatch(setSocket(socketInstance))
     socketInstance.on("connect", () => {
       if (userData) {
