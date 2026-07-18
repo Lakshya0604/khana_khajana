@@ -24,7 +24,7 @@ import { useEffect } from 'react'
 import { io } from 'socket.io-client'
 import { setSocket } from './redux/userSlice'
 
-export const serverUrl = "https://khana-khajana-backend-pp6z.onrender.com"
+export const serverUrl = import.meta.env.VITE_SERVER_URL
 
 function App() {
   useGetCurrentUser()
