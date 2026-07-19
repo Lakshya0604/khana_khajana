@@ -78,7 +78,14 @@ export const signIn = async (req, res) => {
 }
 export const signOut = async (req, res) => {
     try {
-        res.clearCookie("token")
+
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none"
+        })
+        // ab clearCookie ke options bilkul same hain jo cookie set karte
+        // waqt diye the — isliye browser isko sahi se match karke delete karega
         return res.status(200).json({ message: "Logout successfully" });
 
     } catch (error) {
