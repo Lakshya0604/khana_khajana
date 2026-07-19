@@ -7,7 +7,9 @@ export const addItem = async (req, res) => {
         const { name, category, foodType, price } = req.body
         let image;
         if (req.file) {
-            image = await uploadOnCloudinary(req.file.path)
+            image = await uploadOnCloudinary(req.file.buffer)
+            // req.file.path se badal kar req.file.buffer kiya —
+            // kyunki ab Multer file ko memory mein rakhta hai, disk pe nahi
         }
         const shop = await Shop.findOne({ owner: req.userId })
         if (!shop) {
@@ -22,7 +24,6 @@ export const addItem = async (req, res) => {
         await shop.populate({
             path: "items",
             options: { sort: { updatedAt: -1 } }
-
         })
         return res.status(201).json(shop)
     } catch (error) {
@@ -36,7 +37,8 @@ export const editItem = async (req, res) => {
         const { name, category, foodType, price } = req.body
         let image;
         if (req.file) {
-            image = await uploadOnCloudinary(req.file.path)
+            image = await uploadOnCloudinary(req.file.buffer)
+            // yahan bhi wahi change — buffer bhejna hai, path nahi
         }
         const item = await Item.findByIdAndUpdate(itemId, {
             name, category, foodType, price, image
@@ -47,12 +49,10 @@ export const editItem = async (req, res) => {
         const shop = await Shop.findOne({ owner: req.userId }).populate({
             path: "items",
             options: { sort: { updatedAt: -1 } }
-
         })
         return res.status(200).json(shop)
     } catch (error) {
         return res.status(500).json({ message: `edit item error ${error}` })
-
     }
 }
 
