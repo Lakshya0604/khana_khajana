@@ -114,28 +114,24 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 ## 📸 Screenshots
 
-> Add these images to a `/screenshots` folder in your repo, then update the paths below (e.g. `![Home](./screenshots/home.png)`).
-
 **Customer Flow**
 | Home / Browse | Cart | Checkout & Payment |
 |---|---|---|
-| _screenshot_ | _screenshot_ | _screenshot_ |
+| ![Home](./screenshots/owner-homepage.png) | ![Cart](./screenshots/cart.png) | ![Checkout](./screenshots/checkout.png) |
 
 | Razorpay Payment | Order Tracking | Order History (with ratings) |
 |---|---|---|
-| _screenshot_ | _screenshot_ | _screenshot_ |
+| ![Payment](./screenshots/payment.png) | ![Order Tracking](./screenshots/my-orders.png) | ![Order History](./screenshots/my-orders.png) |
 
 **Shop Owner Dashboard**
 | Restaurant & Menu Management |
 |---|
-| _screenshot_ |
+| ![Owner Dashboard](./screenshots/owner-dashboard.png) |
 
 **Delivery Partner Dashboard**
-| Deliveries & Earnings | Available Orders | Live Location Tracking on Map |
-|---|---|---|
-| _screenshot_ | _screenshot_ | _screenshot_ |
-
----
+| Live Location Tracking on Map |
+|---|
+| ![Live Tracking](./screenshots/live-tracking.png) |
 
 ## 🔮 Future Improvements
 
