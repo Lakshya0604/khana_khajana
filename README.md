@@ -146,7 +146,7 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 **Lakshya Yadav**
 B.Tech Computer Science | MERN Stack Developer
-[LinkedIn](#) • [GitHub](https://github.com/Lakshya0604) • [Portfolio](#)
+[LinkedIn](https://www.linkedin.com/in/lakshya-yadav-32a692312/) • [GitHub](https://github.com/Lakshya0604) • [Portfolio](#)
 
 ---
 
