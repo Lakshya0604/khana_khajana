@@ -9,7 +9,11 @@ const earningSchema = new mongoose.Schema({
     shopOrderId: { type: mongoose.Schema.Types.ObjectId, required: true },
     shopName: String,
     amount: { type: Number, required: true },
-    payoutStatus: { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
+    payoutStatus: { type: String, enum: ["unpaid", "processing", "paid", "failed"], default: "unpaid" },
+    payoutMode: { type: String, default: null },
+    payoutTxnId: { type: String, default: null },
+    payoutNote: { type: String, default: null },
+    paidAt: { type: Date, default: null },
     deliveredAt: { type: Date, default: Date.now }
 }, { timestamps: true })
 

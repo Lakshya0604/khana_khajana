@@ -1,5 +1,5 @@
 import express from "express"
-import { getCurrentUser, updateUserLocation, saveUpiId, getMyEarnings, adminPayouts, adminMarkPaid, amIAdmin } from "../controllers/user.controllers.js"
+import { getCurrentUser, updateUserLocation, saveUpiId, getMyEarnings, adminPayouts, adminMarkPaid, amIAdmin, adminSetMode } from "../controllers/user.controllers.js"
 import isAuth from "../middlewares/isAuth.js"
 
 
@@ -11,6 +11,7 @@ userRouter.post("/upi", isAuth, saveUpiId)
 userRouter.get("/earnings", isAuth, getMyEarnings)
 userRouter.get("/admin/payouts", isAuth, adminPayouts)
 userRouter.post("/admin/mark-paid", isAuth, adminMarkPaid)
+userRouter.post("/admin/payout-mode", isAuth, adminSetMode)
 userRouter.get("/admin/me", isAuth, amIAdmin)
 
 export default userRouter

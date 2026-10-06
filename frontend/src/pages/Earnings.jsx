@@ -53,7 +53,7 @@ const Earnings = () => {
                 </div>
                 <div className='w-full max-w-2xl bg-white rounded-2xl shadow p-4 border border-orange-100'>
                     <h2 className='font-semibold text-gray-800 mb-1'>Payout UPI ID</h2>
-                    <p className='text-xs text-gray-500 mb-3'>{data.role === 'owner' ? 'Your share of online orders (food total) is paid to this UPI ID.' : 'Your earnings are paid to this UPI ID.'} Payouts are done manually by the Khana Khajana team for now.</p>
+                    <p className='text-xs text-gray-500 mb-3'>{data.role === 'owner' ? 'Your share of online orders (food total) is paid to this UPI ID.' : 'Your earnings are paid to this UPI ID.'} Payouts go to this UPI ID automatically once your credit is earned (demo mode: simulated, no real money yet).</p>
                     <div className='flex gap-2'>
                         <input value={upi} onChange={(e) => setUpi(e.target.value)} placeholder='yourname@bank' className='flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400' />
                         <button onClick={saveUpi} disabled={saving} className='bg-[#ff4d2d] text-white px-4 rounded-lg text-sm'>{saving ? "Saving..." : "Save"}</button>
@@ -67,7 +67,9 @@ const Earnings = () => {
                             <div key={d.id} className='flex justify-between items-center py-2 border-b last:border-0 text-sm'>
                                 <div>
                                     <p className='font-medium text-gray-800'>{d.shopName || "Delivery"}</p>
-                                    <p className='text-xs text-gray-500'>{new Date(d.deliveredAt).toLocaleString()} - {d.payoutStatus === "paid" ? "paid out" : "pending payout"}</p>
+                                    <p className='text-xs text-gray-500'>{new Date(d.deliveredAt).toLocaleString()} - {d.payoutStatus === "paid" ? "paid" : d.payoutStatus === "processing" ? "payout processing" : d.payoutStatus === "failed" ? "payout failed, will retry" : "pending payout"}</p>
+                                    {d.payoutTxnId && <p className='text-xs text-gray-400'>Txn {d.payoutTxnId}{d.payoutMode === "simulation" ? " (simulated, demo only - no real money)" : ""}</p>}
+                                    {d.payoutStatus !== "paid" && d.payoutNote && <p className='text-xs text-orange-500'>{d.payoutNote}</p>}
                                 </div>
                                 <span className='font-semibold text-green-600'>+₹{d.amount}</span>
                             </div>

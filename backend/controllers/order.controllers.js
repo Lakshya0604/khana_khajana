@@ -4,6 +4,7 @@ import User from "../models/user.model.js"
 import DeliveryAssignment from "../models/deliveryAssignment.model.js"
 import Item from "../models/item.model.js"
 import Earning from "../models/earning.model.js"
+import { payoutEarning } from "../utils/payout.js"
 import { DELIVERY_FEE, MAX_RIDER_KM, LOCATION_FRESH_MS, distanceKm, riderLocationOk } from "../utils/delivery.js"
 import { sendDeliveryOtpMail, sendNewOrderMail } from "../utils/mail.js"
 
@@ -715,6 +716,8 @@ export const verifyDeliveryOtp = async (req, res) => {
                     { $setOnInsert: { kind: "rider", rider: shopOrder.assignedDeliveryBoy, order: order._id, shopOrderId: shopOrder._id, shopName: shopDoc?.name || "", amount: DELIVERY_FEE, deliveredAt: new Date() } },
                     { upsert: true }
                 )
+                const re = await Earning.findOne({ shopOrderId: shopOrder._id, kind: "rider" }).select("_id")
+                if (re) await payoutEarning(re._id)
             } catch (e) { console.error("earning credit error", e.message) }
         }
         await DeliveryAssignment.deleteOne({
@@ -827,6 +830,8 @@ export const confirmPickup = async (req, res) => {
                         { $setOnInsert: { kind: "owner", owner: shopOrder.owner, order: order._id, shopOrderId: shopOrder._id, shopName: shopDoc.name, amount: shopOrder.subTotal, deliveredAt: new Date() } },
                         { upsert: true }
                     )
+                    const oe = await Earning.findOne({ shopOrderId: shopOrder._id, kind: "owner" }).select("_id")
+                    if (oe) await payoutEarning(oe._id)
                 }
             } catch (e) { console.error("owner earning credit error", e.message) }
         }
