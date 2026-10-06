@@ -30,6 +30,9 @@ const shopSchema = new mongoose.Schema({
     isListing: { type: Boolean, default: false },
     listingSource: { type: String },
     osmRef: { type: String },
+    cuisines: { type: String },
+    // URL of the public page the menu + prices were read from (only set when a menu is present)
+    menuSource: { type: String },
     latitude: { type: Number },
     longitude: { type: Number },
     items: [{

@@ -19,7 +19,7 @@ const WhatsAppOrderButton = ({ shopId, items, customerName, address }) => {
             const number = toWhatsAppNumber(data?.mobile)
             if (!number) {
                 win?.close()
-                setError("This shop has not added a WhatsApp number yet. Please use Check Out instead.")
+                setError(data?.isListing ? "This is a listed restaurant without WhatsApp ordering. Please use Check Out instead." : "This shop has not added a WhatsApp number yet. Please use Check Out instead.")
                 return
             }
             const message = buildOrderMessage({ shopName: data.name, items, customerName, address })

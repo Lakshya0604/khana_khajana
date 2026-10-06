@@ -49,7 +49,12 @@ function Shop() {
             </div>}
 
             <div className='max-w-7xl mx-auto px-3 sm:px-6 py-10'>
-                <h2 className='flex items-center justify-center gap-3 text-3xl font-bold mb-10 text-gray-800'><FaUtensils color='red' />Our Menu</h2>
+                <h2 className='flex items-center justify-center gap-3 text-3xl font-bold mb-6 text-gray-800'><FaUtensils color='red' />Our Menu</h2>
+                {shop?.isListing && <p className='text-center text-sm text-gray-500 max-w-2xl mx-auto mb-8'>
+                    {items.length > 0
+                        ? <>Famous place listed by Khana Khajana. Dishes and prices are taken from the restaurant's public Zomato listing{shop.menuSource ? <> (<a href={shop.menuSource} target='_blank' rel='noopener noreferrer' className='underline'>source</a>)</> : null} and may differ at the restaurant. Orders are confirmed by the Khana Khajana team.</>
+                        : <>Famous place listed by Khana Khajana. We could not verify a public menu yet, so ordering is not available here.</>}
+                </p>}
 
                 {items.length > 0 ? (
                     <div className='grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-3 sm:gap-8'>
@@ -57,7 +62,7 @@ function Shop() {
                             <FoodCard data={item} key={item._id} />
                         ))}
                     </div>
-                ) : <p className='text-center text-gray-500 text-lg'>No Items Available</p>
+                ) : <p className='text-center text-gray-500 text-lg'>{shop?.isListing ? 'Menu coming soon' : 'No Items Available'}</p>
 
                 }
 

@@ -6,7 +6,7 @@ import { saveCity } from '../hooks/useGetCity'
 const CITIES = [
     ['Agra', 'Uttar Pradesh'], ['Delhi', 'Delhi'], ['Mumbai', 'Maharashtra'], ['Bengaluru', 'Karnataka'],
     ['Hyderabad', 'Telangana'], ['Chennai', 'Tamil Nadu'], ['Kolkata', 'West Bengal'], ['Pune', 'Maharashtra'],
-    ['Jaipur', 'Rajasthan'], ['Lucknow', 'Uttar Pradesh'], ['Ahmedabad', 'Gujarat'], ['Amritsar', 'Punjab']
+    ['Jaipur', 'Rajasthan'], ['Lucknow', 'Uttar Pradesh'], ['Ahmedabad', 'Gujarat'], ['Amritsar', 'Punjab'], ['Varanasi', 'Uttar Pradesh']
 ]
 
 function CityPicker() {

@@ -46,6 +46,10 @@ app.use("/api/order", orderRouter)
 
 socketHandler(io)
 server.listen(port, () => {
-    connectDb();
+    Promise.resolve(connectDb()).then(async () => {
+        if (process.env.SEED_LISTINGS === '1') {
+            try { const { seedListings } = await import('./seed/seedListings.js'); await seedListings() } catch (e) { console.log('[seed] failed', e.message) }
+        }
+    })
     console.log(`server is running at http://localhost:${port}`);
 })
