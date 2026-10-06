@@ -65,7 +65,8 @@ export const getShopWhatsapp = async (req, res) => {
         if (!shop) {
             return res.status(404).json({ message: "shop not found" })
         }
-        return res.status(200).json({ name: shop.name, mobile: shop.owner?.mobile || null })
+        // Listings never expose a number: the business has not registered.
+        return res.status(200).json({ name: shop.name, mobile: shop.isListing ? null : (shop.owner?.mobile || null) })
     } catch (error) {
         return res.status(500).json({ message: `get shop whatsapp error ${error}` })
     }

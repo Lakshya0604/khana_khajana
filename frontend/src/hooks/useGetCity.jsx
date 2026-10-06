@@ -47,8 +47,11 @@ function useGetCity() {
         }
 
         // 2) First visit: ask for location, detect the city, or fall back to the city picker.
-        const fallback = () => { if (!cancelled) dispatch(setCityPickerOpen(true)) }
+        let settled = false
+        const fallback = () => { if (!cancelled && !settled) dispatch(setCityPickerOpen(true)) }
         if (!navigator.geolocation) { fallback(); return }
+        // If the permission prompt is ignored it never errors, so offer the picker after a short wait.
+        const timer = setTimeout(fallback, 12000)
 
         navigator.geolocation.getCurrentPosition(async (position) => {
             try {
@@ -57,6 +60,8 @@ function useGetCity() {
                 const found = await reverse(latitude, longitude)
                 if (cancelled) return
                 if (!found) { fallback(); return }
+                settled = true
+                dispatch(setCityPickerOpen(false))
                 dispatch(setCity(found.city))
                 dispatch(setState(found.state))
                 dispatch(setCurrentAddress(found.line))
@@ -65,9 +70,9 @@ function useGetCity() {
             } catch {
                 fallback()
             }
-        }, fallback, { enableHighAccuracy: false, maximumAge: 10 * 60 * 1000, timeout: 10000 })
+        }, () => { clearTimeout(timer); fallback() }, { enableHighAccuracy: false, maximumAge: 10 * 60 * 1000, timeout: 10000 })
 
-        return () => { cancelled = true }
+        return () => { cancelled = true; clearTimeout(timer) }
     }, [dispatch])
 }
 

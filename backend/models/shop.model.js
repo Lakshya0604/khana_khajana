@@ -26,6 +26,12 @@ const shopSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    // Display-only listing seeded from public data. Never has real contact details; order mail goes to the platform inbox.
+    isListing: { type: Boolean, default: false },
+    listingSource: { type: String },
+    osmRef: { type: String },
+    latitude: { type: Number },
+    longitude: { type: Number },
     items: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Item"

@@ -2,7 +2,24 @@ import Shop from "../models/shop.model.js"
 import Order from "../models/order.model.js"
 import User from "../models/user.model.js"
 import DeliveryAssignment from "../models/deliveryAssignment.model.js"
-import { sendDeliveryOtpMail } from "../utils/mail.js"
+import { sendDeliveryOtpMail, sendNewOrderMail } from "../utils/mail.js"
+
+// Emails each shop about its part of an order. Listing shops route to the platform inbox (MAIL_FROM), never the business.
+const notifyShops = async (order) => {
+    const customer = order.user
+    for (const shopOrder of order.shopOrders) {
+        try {
+            const shopId = shopOrder.shop?._id || shopOrder.shop
+            const shop = await Shop.findById(shopId).populate("owner", "email")
+            if (!shop) continue
+            const to = shop.isListing ? process.env.MAIL_FROM : shop.owner?.email
+            if (!to || to.endsWith(".invalid")) continue
+            await sendNewOrderMail({ to, shopName: shop.name, isListing: shop.isListing, order, shopOrder, customer })
+        } catch (e) {
+            console.log("new order mail failed:", e.message)
+        }
+    }
+}
 import Razorpay from "razorpay"
 import dotenv, { parse } from "dotenv"
 dotenv.config()
@@ -87,7 +104,7 @@ export const placeOrder = async (req, res) => {
         })
         await newOrder.populate("shopOrders.shopOrderItems.item", "name image price")
         await newOrder.populate("shopOrders.shop", "name socketId")
-        await newOrder.populate("user", "name email mobile")
+        await newOrder.populate("user", "fullname name email mobile")
 
         const io = req.app.get('io')
         if (io) {
@@ -108,6 +125,7 @@ export const placeOrder = async (req, res) => {
             })
         }
 
+        notifyShops(newOrder).catch(() => { })
         return res.status(201).json(newOrder)
 
     } catch (error) {
@@ -132,7 +150,7 @@ export const verifyPayment = async (req, res) => {
         await order.save()
 
         await order.populate("shopOrders.shop", "name socketId")
-        await order.populate("user", "name email mobile")
+        await order.populate("user", "fullname name email mobile")
         await order.populate("shopOrders.shopOrderItems.item", "name image price")
 
         const io = req.app.get('io')
@@ -152,6 +170,7 @@ export const verifyPayment = async (req, res) => {
                 }
             });
         }
+        notifyShops(order).catch(() => { })
         return res.status(200).json(order)
     } catch (error) {
         return res.status(500).json({ message: "verify payment error", error: error.message })
