@@ -63,7 +63,7 @@ export const seedListings = async () => {
 export const cleanupQa = async () => {
     const Order = (await import("../models/order.model.js")).default
     const DA = (await import("../models/deliveryAssignment.model.js")).default
-    const users = await User.find({ email: { $in: ["qa.loc@example.com", "lakshyayaduvanshi28+khowner@gmail.com", "qa.mobile@example.com", "qa.cust@example.com", "qa.owner@example.com", "qa.rider@example.com"] } })
+    const users = await User.find({ email: { $in: ["qa.loc@example.com", "lakshyayaduvanshi28+khowner@gmail.com", "qa.mobile@example.com", "qa.cust@example.com", "qa.owner@example.com", "qa.rider@example.com", "qa.admin@example.com", "qa.rider2@example.com"] } })
     const ids = users.map(u => u._id)
     const shops = await Shop.find({ owner: { $in: ids }, name: "QA Test Shop" })
     const shopIds = shops.map(s => s._id)
