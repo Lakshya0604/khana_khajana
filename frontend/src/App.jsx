@@ -51,7 +51,6 @@ function App() {
         socketInstance.emit('identity', { userId: userData._id })
       }
     })
-    if (!authChecked) return <div className='min-h-screen flex items-center justify-center text-gray-400'>Loading...</div>
   return () => {
       socketInstance.disconnect()
     }
@@ -75,6 +74,7 @@ function App() {
     setMeta('meta[property="og:url"]', 'content', url)
     setMeta('meta[property="og:title"]', 'content', document.title)
   }, [pathname])
+  if (!authChecked) return <div className='min-h-screen flex items-center justify-center text-gray-400'>Loading...</div>
   return (
     <>
     <CityPicker />
