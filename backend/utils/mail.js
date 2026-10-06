@@ -1,31 +1,31 @@
-import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
 dotenv.config()
 
-// Gmail SMTP (free). Set GMAIL_USER and GMAIL_APP_PASSWORD in the server env.
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 10000,
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
-    }
-})
-
+// Free-tier hosts block SMTP ports, so mail goes out over HTTPS using the Brevo API (300 emails/day free).
+// Env: BREVO_API_KEY and MAIL_FROM (a sender address verified in Brevo).
 const send = async (to, subject, html) => {
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    if (!process.env.BREVO_API_KEY || !process.env.MAIL_FROM) {
         throw new Error("mail is not configured")
     }
-    await transporter.sendMail({
-        from: `"Khana Khajana" <${process.env.GMAIL_USER}>`,
-        to,
-        subject,
-        html
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+            "api-key": process.env.BREVO_API_KEY,
+            "content-type": "application/json",
+            accept: "application/json"
+        },
+        body: JSON.stringify({
+            sender: { name: "Khana Khajana", email: process.env.MAIL_FROM },
+            to: [{ email: to }],
+            subject,
+            htmlContent: html
+        }),
+        signal: AbortSignal.timeout(10000)
     })
+    if (!res.ok) {
+        const text = await res.text().catch(() => "")
+        throw new Error(`mail failed ${res.status} ${text.slice(0, 200)}`)
+    }
 }
 
 export const sendOtpMail = async (to, otp) => {
