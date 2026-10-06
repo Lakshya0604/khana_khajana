@@ -13,7 +13,8 @@ export const getCurrentUser = async (req, res) => {
         if (!user) {
             return res.status(400).json({ message: "user is not found" })
         }
-        return res.status(200).json(user)
+        const { password, resetOtp, otpExpires, ...safe } = user.toObject()
+        return res.status(200).json({ ...safe, isAdmin: await isAdmin(userId) })
     } catch (error) {
         return res.status(500).json({ message: `get current user error ${error}` })
     }
