@@ -2,6 +2,13 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs"
 import genToken from "../utils/token.js";
 import { sendOtpMail } from "../utils/mail.js";
+import { isAdmin } from "./user.controllers.js";
+
+// Safe user payload for the client (no password / OTP), with the admin flag so the app can land admins on /admin immediately.
+const clientUser = async (u) => {
+    const { password, resetOtp, otpExpires, ...safe } = u.toObject()
+    return { ...safe, isAdmin: await isAdmin(u._id) }
+}
 
 export const signUp = async (req, res) => {
     try {
@@ -42,7 +49,7 @@ export const signUp = async (req, res) => {
             httpOnly: true
         })
         user.password = undefined;
-        return res.status(201).json(user);
+        return res.status(201).json(await clientUser(user));
     } catch (error) {
         return res.status(500).json(`signup error ${error}`)
     }
@@ -71,7 +78,7 @@ export const signIn = async (req, res) => {
             httpOnly: true
         })
         user.password = undefined;
-        return res.status(200).json(user);
+        return res.status(200).json(await clientUser(user));
 
     } catch (error) {
         return res.status(500).json(`sign in error ${error}`)
@@ -176,7 +183,7 @@ export const googleAuth = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
             httpOnly: true
         })
-        return res.status(200).json(user);
+        return res.status(200).json(await clientUser(user));
     } catch (error) {
         return res.status(500).json({ message: `Google Auth error${error}` })
 

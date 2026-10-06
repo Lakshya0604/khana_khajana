@@ -7,14 +7,17 @@ import { useState } from 'react'
 import { FaStore } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
 import { FaUtensils } from "react-icons/fa";
+import Spinner from '../components/Spinner'
 import FoodCard from '../components/FoodCard'
 import { FaArrowLeft } from "react-icons/fa6";
 function Shop() {
     const { shopId } = useParams()
     const [items, setItems] = useState([])
     const [shop, setShop] = useState(null)
+    const [loading, setLoading] = useState(true)
     const navigate = useNavigate()
     const handleShop = async () => {
+        setLoading(true)
         try {
             const result = await axios.get(`${serverUrl}/api/item/get-by-shop/${shopId}`, { withCredentials: true })
             setShop(result.data.shop)
@@ -23,6 +26,7 @@ function Shop() {
         catch (error) {
             console.log(error)
         }
+        setLoading(false)
     }
 
     useEffect(() => {
@@ -50,7 +54,8 @@ function Shop() {
 
             <div className='max-w-7xl mx-auto px-3 sm:px-6 py-10'>
                 <h2 className='flex items-center justify-center gap-3 text-3xl font-bold mb-6 text-gray-800'><FaUtensils color='red' />Our Menu</h2>
-                {shop?.isListing && <p className='text-center text-sm text-gray-500 max-w-2xl mx-auto mb-8'>
+                {loading && <Spinner label='Loading menu...' />}
+                {!loading && shop?.isListing && <p className='text-center text-sm text-gray-500 max-w-2xl mx-auto mb-8'>
                     {shop.sampleMenu
                         ? <>Sample menu - prices may differ. We have not verified this restaurant's own menu yet, so these dishes and prices are indicative only. Orders are confirmed by the Khana Khajana team.</>
                         : items.length > 0
@@ -58,7 +63,7 @@ function Shop() {
                         : <>Famous place listed by Khana Khajana. We could not verify a public menu yet, so ordering is not available here.</>}
                 </p>}
 
-                {items.length > 0 ? (
+                {loading ? null : items.length > 0 ? (
                     <div className='grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-3 sm:gap-8'>
                         {items.map((item) => (
                             <FoodCard data={item} key={item._id} />

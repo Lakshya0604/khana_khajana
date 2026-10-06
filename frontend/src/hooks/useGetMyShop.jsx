@@ -15,6 +15,7 @@ function useGetMyShop() {
 
             } catch (error) {
                 console.log(error)
+                dispatch(setMyShopData(null))
             }
         }
         fetchShop()

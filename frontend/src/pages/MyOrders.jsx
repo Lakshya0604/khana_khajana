@@ -1,3 +1,4 @@
+import Spinner from '../components/Spinner'
 import React, { useEffect } from 'react'
 import { IoArrowBack } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux"
@@ -15,7 +16,7 @@ const MyOrders = () => {
         const handleNewOrder = (data) => {
             console.log('socket newOrder received:', data)
             if (data.shopOrders?.owner._id == userData._id) {
-                dispatch(setMyOrders([data, ...myOrders]))
+                dispatch(setMyOrders([data, ...(myOrders || [])]))
             }
         }
 
@@ -50,7 +51,9 @@ const MyOrders = () => {
                     <h1 className='text-3xl font-bold text-start'>My Orders </h1>
                 </div>
                 <div className='space-y-6'>
-                    {!myOrders || myOrders.length === 0 ? (
+                    {myOrders === null || myOrders === undefined ? (
+                        <Spinner label='Loading your orders...' />
+                    ) : myOrders.length === 0 ? (
                         <div className='rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-gray-500'>
                             No orders yet.
                         </div>

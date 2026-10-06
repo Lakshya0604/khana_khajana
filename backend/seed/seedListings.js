@@ -47,12 +47,21 @@ export const seedListings = async () => {
         if (shop) {
             // already seeded: never rebuild items (keeps item IDs stable), but fill in a missing real photo
             if (l.image && shop.image === IMG) { shop.image = l.image; await shop.save() }
+            // fill in real per-dish photos on items that still carry the generic image
+            const withImg = (l.items || []).filter(i => i.image)
+            if (withImg.length) {
+                const existing = await Item.find({ shop: shop._id, image: IMG })
+                for (const it of existing) {
+                    const m = withImg.find(i => i.name === it.name)
+                    if (m) { it.image = m.image; await it.save() }
+                }
+            }
             continue
         }
         shop = await Shop.create(fields)
         await Item.deleteMany({ shop: shop._id })
         const docs = await Item.insertMany(l.items.map(i => ({
-            name: i.name, image: IMG, shop: shop._id, price: i.price,
+            name: i.name, image: i.image || IMG, shop: shop._id, price: i.price,
             category: pickCategory(i.name, i.cat), sourceCategory: i.cat,
             foodType: i.type === "veg" ? "veg" : "non veg"
         })))
@@ -71,6 +80,19 @@ const nudge = (price, seed) => {
     return Math.max(10, Math.round((price * f) / 5) * 5)
 }
 export const fillSampleMenus = async (ownerId) => {
+    // refresh dish photos on sample shops created earlier (they got the restaurant photo): use the donor's matching dish photo
+    for (const sh of await Shop.find({ owner: ownerId, isListing: true, sampleMenu: true })) {
+        const donors = await Shop.find({ owner: ownerId, isListing: true, city: sh.city, _id: { $ne: sh._id }, sampleMenu: { $ne: true }, "items.0": { $exists: true } })
+        const mine = new Set((sh.cuisines || "").toLowerCase().split(/[,\s]+/).filter(w => w.length > 3))
+        const ov = x => [...new Set((x.cuisines || "").toLowerCase().split(/[,\s]+/).filter(w => w.length > 3))].filter(w => mine.has(w)).length
+        donors.sort((a, b) => (ov(b) - ov(a)) || (b.items.length - a.items.length))
+        if (!donors.length) continue
+        const dItems = await Item.find({ shop: donors[0]._id })
+        for (const it of await Item.find({ shop: sh._id, image: sh.image })) {
+            const m = dItems.find(x => x.name === it.name && x.image !== donors[0].image)
+            if (m) { it.image = m.image; await it.save() }
+        }
+    }
     const empties = await Shop.find({ owner: ownerId, isListing: true, sampleMenu: { $ne: true }, $or: [{ items: { $size: 0 } }, { items: { $exists: false } }] })
     let n = 0
     for (const shop of empties) {
@@ -84,7 +106,7 @@ export const fillSampleMenus = async (ownerId) => {
         const src = await Item.find({ shop: donor._id }).limit(20)
         let seed = [...shop.name].reduce((a, c) => a + c.charCodeAt(0), 0)
         const docs = await Item.insertMany(src.map((i, k) => ({
-            name: i.name, image: shop.image || i.image, shop: shop._id, price: nudge(i.price, seed + k * 7),
+            name: i.name, image: (i.image && i.image !== donor.image) ? i.image : (shop.image || i.image), shop: shop._id, price: nudge(i.price, seed + k * 7),
             category: i.category, sourceCategory: i.sourceCategory, foodType: i.foodType
         })))
         shop.items = docs.map(d => d._id)

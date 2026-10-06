@@ -7,11 +7,11 @@ const userSlice = createSlice({
         cityPickerOpen: false,
         state: null,
         currentAddress: null,
-        shopsInMyCity: [],
+        shopsInMyCity: null,
         itemsInMyCity: null,
         cartItems: [],
         totalAmount: 0,
-        myOrders: [],
+        myOrders: null,
         searchItems: null,
         socket: null
     },
@@ -68,11 +68,11 @@ const userSlice = createSlice({
             state.myOrders = action.payload
         },
         addMyOrder: (state, action) => {
-            state.myOrders = [action.payload, ...state.myOrders]
+            state.myOrders = [action.payload, ...(state.myOrders || [])]
         },
         updateOrderStatus: (state, action) => {
             const { orderId, shopId, status } = action.payload
-            const order = state.myOrders.find(o => o._id == orderId)
+            const order = (state.myOrders || []).find(o => o._id == orderId)
             if (order) {
                 if (order.shopOrders && order.shopOrders.shop._id == shopId) {
                     order.shopOrders.status = status
@@ -81,7 +81,7 @@ const userSlice = createSlice({
         },
         updateRealtimeOrderStatus: (state, action) => {
             const { orderId, shopId, status } = action.payload
-            const order = state.myOrders.find(o => o._id == orderId)
+            const order = (state.myOrders || []).find(o => o._id == orderId)
             if (order) {
                 if (Array.isArray(order.shopOrders)) {
                     const shopOrder = order.shopOrders.find(so => String(so.shop._id) == String(shopId))
@@ -93,7 +93,7 @@ const userSlice = createSlice({
         },
         updateAssignedDeliveryBoy: (state, action) => {
             const { orderId, shopId, assignedDeliveryBoy } = action.payload
-            const order = state.myOrders.find(o => o._id == orderId)
+            const order = (state.myOrders || []).find(o => o._id == orderId)
             if (order) {
                 if (Array.isArray(order.shopOrders)) {
                     const shopOrder = order.shopOrders.find(so => String(so.shop._id) == String(shopId))

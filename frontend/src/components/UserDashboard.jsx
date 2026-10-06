@@ -1,3 +1,4 @@
+import Spinner from './Spinner'
 import React from 'react'
 import Nav from './Nav'
 import { categories } from '../category.js'
@@ -17,6 +18,8 @@ const UserDashboard = () => {
     const [visible, setVisible] = useState(40)
     const navigate = useNavigate()
     const hasShops = Array.isArray(shopsInMyCity) && shopsInMyCity.length > 0
+    const shopsLoading = shopsInMyCity === null
+    const itemsLoading = itemsInMyCity === null || itemsInMyCity === undefined
 
 
     // Tile labels differ from the stored category names for these two
@@ -83,7 +86,9 @@ const UserDashboard = () => {
                     )}
                 </div>
                 <div className='w-full rounded-2xl bg-gradient-to-r from-[#fff7f4] to-white p-2 sm:p-3 shadow-sm border border-orange-100'>
-                    {hasShops ? (
+                    {shopsLoading ? (
+                        <Spinner label='Loading restaurants...' className='py-6' />
+                    ) : hasShops ? (
                         <div className='w-full flex overflow-x-auto gap-3 sm:gap-4 pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#ff4d2d] scrollbar-track-transparent scroll-smooth'>
                             {shopsInMyCity.map((shop, index) => (
                                 <div className='snap-start flex-shrink-0' key={shop._id || index}>
@@ -93,7 +98,7 @@ const UserDashboard = () => {
                         </div>
                     ) : (
                         <div className='w-full rounded-2xl border border-dashed border-gray-300 bg-white/80 px-4 py-5 text-center text-sm text-gray-600'>
-                            {city ? `No shops are available in ${city} yet.` : 'We are loading your nearby shops. Please wait a moment.'}
+                            No shops are available in {city} yet.
                         </div>
                     )}
                 </div>
@@ -115,11 +120,13 @@ const UserDashboard = () => {
                     <option value='low'>Price: Low to High</option>
                     <option value='high'>Price: High to Low</option>
                 </select>
-                <span className='w-full text-xs text-gray-500'>{updatedItemsList.length} item{updatedItemsList.length === 1 ? '' : 's'}{activeCategory !== 'All' ? ` in ${activeCategory}` : ''}</span>
+                <span className='w-full text-xs text-gray-500'>{itemsLoading ? 'Loading...' : `${updatedItemsList.length} item${updatedItemsList.length === 1 ? '' : 's'}${activeCategory !== 'All' ? ` in ${activeCategory}` : ''}`}</span>
             </div>
 
             <div className='w-full grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-[20px] justify-center px-3 sm:px-2 lg:px-0 pb-4'>
-                {updatedItemsList.length > 0 ? (
+                {itemsLoading ? (
+                    <div className='col-span-2 w-full'><Spinner label='Loading dishes...' /></div>
+                ) : updatedItemsList.length > 0 ? (
                     updatedItemsList.slice(0, visible).map((item) => (
                         <FoodCard key={item._id} data={item} />
                     ))

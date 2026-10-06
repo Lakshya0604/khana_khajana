@@ -4,17 +4,19 @@ import { useSelector } from 'react-redux'
 import { CiForkAndKnife } from "react-icons/ci";
 import { useNavigate } from 'react-router-dom';
 import { FaPen } from "react-icons/fa";
+import Spinner from './Spinner'
 import OwnerItemCard from './OwnerItemCard';
 
 const OwnerDashboard = () => {
-    const { myShopData } = useSelector(state => state.owner)
+    const { myShopData, myShopLoaded } = useSelector(state => state.owner)
     const navigate = useNavigate();
     return (
         <div className='pt-[70px] min-h-screen bg-orange-50'>
             <Nav />
             <div className='flex justify-end px-6 pt-3'><button className='text-sm text-[#ff4d2d] underline' onClick={() => navigate('/earnings')}>My earnings and payout UPI</button></div>
             <div>
-                {!myShopData &&
+                {!myShopLoaded && <Spinner label='Loading your restaurant...' />}
+                {myShopLoaded && !myShopData &&
                     <div className='flex justify-center items-center p-4 sm:p-6'>
                         <div className='w-full max-w-md bg-white shadow-lg rounded-xl p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300'>
                             <div className='flex flex-col items-center text-center'>

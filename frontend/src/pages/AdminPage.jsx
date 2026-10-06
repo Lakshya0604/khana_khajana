@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import { useDispatch } from 'react-redux'
+import { setUserData } from '../redux/userSlice'
 import { useNavigate } from 'react-router-dom'
 import { serverUrl } from '../App'
 import AdminPayouts from './AdminPayouts'
+import Spinner from '../components/Spinner'
 
 const api = (p) => axios.get(`${serverUrl}/api/admin/${p}`, { withCredentials: true })
 const rs = (n) => `₹${Math.round((n || 0) * 100) / 100}`
@@ -18,7 +21,7 @@ const Card = ({ label, value, sub }) => (
 const Overview = () => {
     const [d, setD] = useState(null)
     useEffect(() => { api('overview').then(r => setD(r.data)).catch(() => { }) }, [])
-    if (!d) return <p className='text-gray-400'>Loading...</p>
+    if (!d) return <Spinner />
     const m = d.money
     return (
         <div className='space-y-4'>
@@ -52,7 +55,7 @@ const Orders = () => {
     const [f, setF] = useState('all')
     const load = () => api('orders?limit=150').then(r => setList(r.data)).catch(() => { })
     useEffect(() => { load(); const t = setInterval(load, 20000); return () => clearInterval(t) }, [])
-    if (!list) return <p className='text-gray-400'>Loading...</p>
+    if (!list) return <Spinner />
     const live = (o) => o.shopOrders.some(s => s.status !== 'delivered')
     const shown = list.filter(o => f === 'all' ? true : f === 'live' ? live(o) : !live(o))
     return (
@@ -88,7 +91,7 @@ const Users = () => {
         await axios.post(`${serverUrl}/api/admin/user-blocked`, { userId: u._id, blocked: !u.blocked }, { withCredentials: true }).catch(e => alert(e.response?.data?.message || 'failed'))
         load()
     }
-    if (!list) return <p className='text-gray-400'>Loading...</p>
+    if (!list) return <Spinner />
     const shown = list.filter(u => role === 'all' || u.role === role)
     return (
         <div>
@@ -120,7 +123,7 @@ const Shops = () => {
         await axios.post(`${serverUrl}/api/admin/shop-hidden`, { shopId: s._id, hidden: !s.hidden }, { withCredentials: true })
         load()
     }
-    if (!d) return <p className='text-gray-400'>Loading...</p>
+    if (!d) return <Spinner />
     return (
         <div>
             <p className='text-xs text-gray-500 mb-2'>Restaurants registered by owners. {d.listings} Zomato-sourced listing shops are not shown here.</p>
@@ -142,6 +145,12 @@ const Shops = () => {
 
 const AdminPage = () => {
     const navigate = useNavigate()
+    const dispatch = useDispatch()
+    const signOut = async () => {
+        try { await axios.get(`${serverUrl}/api/auth/signout`, { withCredentials: true }) } catch (e) { }
+        dispatch(setUserData(null))
+        navigate('/signin')
+    }
     const [tab, setTab] = useState('overview')
     const [ok, setOk] = useState(null)
     useEffect(() => { api('overview').then(() => setOk(true)).catch(() => setOk(false)) }, [])
@@ -151,8 +160,8 @@ const AdminPage = () => {
         <div className='min-h-screen bg-[#fff9f6] p-4 flex flex-col items-center'>
             <div className='w-full max-w-4xl'>
                 <div className='flex items-center gap-3 mb-3'>
-                    <button onClick={() => navigate('/')} className='text-[#ff4d2d]'>Back</button>
                     <h1 className='text-xl font-bold text-gray-800'>Admin control room</h1>
+                    <button onClick={signOut} className='ml-auto text-sm text-[#ff4d2d] underline'>Sign out</button>
                 </div>
                 <div className='flex flex-wrap gap-2 mb-4 text-sm'>
                     {tabs.map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={`px-3 py-1.5 rounded-lg border ${tab === k ? 'bg-[#ff4d2d] text-white border-[#ff4d2d]' : 'bg-white text-gray-700'}`}>{l}</button>)}

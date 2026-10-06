@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import Spinner from '../components/Spinner'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
@@ -67,6 +68,7 @@ const Earnings = () => {
                 <h1 className='text-xl font-bold text-gray-800'>My Earnings</h1>
             </div>
             {error && <p className='text-red-500'>{error}</p>}
+            {!data && !error && <Spinner label='Loading earnings...' />}
             {data && <>
                 <div className='w-full max-w-2xl grid grid-cols-3 gap-3'>
                     {[['Today', data.today], ['Total earned', data.total], ['To be paid out', data.unpaid]].map(([l, v]) => (

@@ -10,9 +10,10 @@ function useGetItemsByCity() {
 
     useEffect(() => {
         if (!city?.trim()) {
-            dispatch(setItemsInMyCity([]))
+            dispatch(setItemsInMyCity(null))
             return
         }
+        dispatch(setItemsInMyCity(null))
 
         const fetchItems = async () => {
             try {
