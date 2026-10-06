@@ -17,3 +17,6 @@ export const riderLocationOk = (rider) => {
     if (!rider.locationUpdatedAt) return false
     return Date.now() - new Date(rider.locationUpdatedAt).getTime() <= LOCATION_FRESH_MS
 }
+
+// A rider holding this much undeposited COD cash gets no new COD orders until it is deposited
+export const COD_DEPOSIT_LIMIT = 500

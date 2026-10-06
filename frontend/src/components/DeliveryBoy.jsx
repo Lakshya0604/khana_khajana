@@ -198,6 +198,7 @@ const DeliveryBoy = () => {
                         <button className='mb-4 text-sm text-[#ff4d2d] underline' onClick={() => navigate('/earnings')}>View all earnings and set payout UPI</button>
                     </div>
                 </div>
+                {earn?.deposit?.pending > 0 && <div className={`${earn.deposit.blocked ? 'bg-red-50 border-red-200 text-red-700' : 'bg-blue-50 border-blue-200 text-blue-800'} border rounded-2xl p-4 w-[90%] text-sm`}>COD cash to deposit: ₹{earn.deposit.pending}.{earn.deposit.blocked ? ' You will not get cash orders until you deposit.' : ''} <button className='underline' onClick={() => navigate('/earnings')}>Deposit</button></div>}
                 {earn && !earn.upiId && <div className='bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-[90%] text-sm text-yellow-800'>Add your payout UPI ID to get paid. <button className='underline' onClick={() => navigate('/earnings')}>Add now</button></div>}
                 {locState !== "on" && <div className='bg-white rounded-2xl p-5 shadow-md w-[90%] border border-red-200 text-center'>
                     <h2 className='text-lg font-bold text-red-500 mb-2'>Turn on your location</h2>

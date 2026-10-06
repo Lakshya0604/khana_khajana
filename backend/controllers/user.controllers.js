@@ -1,4 +1,5 @@
-import { payoutPendingFor, getMode, setMode, realConfigured } from "../utils/payout.js"
+import CodDeposit from "../models/codDeposit.model.js"
+import { pendingDeposit, startDeposit, verifyDeposit, payoutPendingFor, getMode, setMode, realConfigured } from "../utils/payout.js"
 import User from "../models/user.model.js"
 import Earning from "../models/earning.model.js"
 
@@ -63,6 +64,7 @@ export const getMyEarnings = async (req, res) => {
         return res.status(200).json({
             upiId: me.upiId || null,
             role: me.role,
+            deposit: me.role === "deliveryBoy" ? { ...(await pendingDeposit(req.userId)), list: (await CodDeposit.find({ rider: req.userId }).sort({ collectedAt: -1 }).limit(50).lean()).map(d => ({ id: d._id, shopName: d.shopName, amount: d.amount, status: d.status, receivedVia: d.receivedVia, txnId: d.txnId, collectedAt: d.collectedAt, receivedAt: d.receivedAt })) } : null,
             total: sum(list),
             today: sum(list.filter(e => new Date(e.deliveredAt) >= sod)),
             unpaid: sum(list.filter(e => e.payoutStatus !== "paid")),
@@ -94,7 +96,7 @@ export const adminPayouts = async (req, res) => {
             const u = byId[String(r._id.u)] || {}
             return { userId: r._id.u, kind: r._id.kind, name: u.fullname, email: u.email, mobile: u.mobile, upiId: u.upiId || null, owed: r.owed, count: r.count }
         }).sort((a, b) => b.owed - a.owed)
-        return res.status(200).json({ totalOwed: list.reduce((t, r) => t + r.owed, 0), list, mode: await getMode(), realConfigured: realConfigured() })
+        return res.status(200).json({ totalOwed: list.reduce((t, r) => t + r.owed, 0), list, mode: await getMode(), realConfigured: realConfigured(), deposits: await adminDeposits() })
     } catch (error) {
         return res.status(500).json({ message: `admin payouts error ${error}` })
     }
@@ -119,6 +121,42 @@ export const adminSetMode = async (req, res) => {
         if (!(await isAdmin(req.userId))) return res.status(403).json({ message: "not allowed" })
         await setMode(req.body.mode)
         return res.status(200).json({ mode: await getMode() })
+    } catch (error) {
+        return res.status(400).json({ message: error.message })
+    }
+}
+
+const adminDeposits = async () => {
+    const rows = await CodDeposit.aggregate([{ $match: { status: "pending" } }, { $group: { _id: "$rider", owed: { $sum: "$amount" }, count: { $sum: 1 } } }])
+    const users = await User.find({ _id: { $in: rows.map(r => r._id) } }).select("fullname email mobile upiId").lean()
+    const byId = Object.fromEntries(users.map(u => [String(u._id), u]))
+    return rows.map(r => { const u = byId[String(r._id)] || {}; return { riderId: r._id, name: u.fullname, mobile: u.mobile, upiId: u.upiId || null, owed: r.owed, count: r.count } }).sort((a, b) => b.owed - a.owed)
+}
+
+export const adminDepositReceived = async (req, res) => {
+    try {
+        if (!(await isAdmin(req.userId))) return res.status(403).json({ message: "not allowed" })
+        const r = await CodDeposit.updateMany({ rider: req.body.riderId, status: "pending" }, { status: "received", receivedVia: "manual", txnId: `MANUAL-DEP-${Date.now().toString(36).toUpperCase()}`, receivedAt: new Date() })
+        return res.status(200).json({ marked: r.modifiedCount })
+    } catch (error) {
+        return res.status(500).json({ message: `deposit error ${error}` })
+    }
+}
+
+export const riderStartDeposit = async (req, res) => {
+    try {
+        const me = await User.findById(req.userId).select("role")
+        if (me?.role !== "deliveryBoy") return res.status(403).json({ message: "only delivery partners" })
+        return res.status(200).json(await startDeposit(req.userId))
+    } catch (error) {
+        return res.status(500).json({ message: `deposit error ${error.message}` })
+    }
+}
+
+export const riderVerifyDeposit = async (req, res) => {
+    try {
+        const n = await verifyDeposit(req.userId, req.body)
+        return res.status(200).json({ received: n })
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }

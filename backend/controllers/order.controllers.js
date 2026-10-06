@@ -4,7 +4,8 @@ import User from "../models/user.model.js"
 import DeliveryAssignment from "../models/deliveryAssignment.model.js"
 import Item from "../models/item.model.js"
 import Earning from "../models/earning.model.js"
-import { payoutEarning } from "../utils/payout.js"
+import { payoutEarning, isCodBlocked } from "../utils/payout.js"
+import CodDeposit from "../models/codDeposit.model.js"
 import { DELIVERY_FEE, MAX_RIDER_KM, LOCATION_FRESH_MS, distanceKm, riderLocationOk } from "../utils/delivery.js"
 import { sendDeliveryOtpMail, sendNewOrderMail } from "../utils/mail.js"
 
@@ -341,7 +342,13 @@ export const updateOrderStatus = async (req, res) => {
             }).distinct("assignedTo")
             const busyIdSet = new Set(busyIds.map(id => String(id)))
             const availableBoys = nearByDeliveryBoys.filter(b => !busyIdSet.has(String(b._id)))
-            const candidates = availableBoys.map(b => b._id)
+            let candidateBoys = availableBoys
+            if (order.paymentMethod === "cod") {
+                const ok = []
+                for (const b of availableBoys) { if (!(await isCodBlocked(b._id))) ok.push(b) }
+                candidateBoys = ok
+            }
+            const candidates = candidateBoys.map(b => b._id)
 
             if (candidates.length == 0) {
                 await order.save()
@@ -356,7 +363,7 @@ export const updateOrderStatus = async (req, res) => {
                 status: "brodcasted"
             })
             shopOrder.assignment = deliveryAssignment._id
-            deliveryBoysPayload = availableBoys.map(b => ({
+            deliveryBoysPayload = candidateBoys.map(b => ({
                 id: b._id,
                 fullname: b.fullname,
                 longitude: b.location.coordinates[0],
@@ -368,7 +375,7 @@ export const updateOrderStatus = async (req, res) => {
 
             const io = req.app.get('io')
             if (io) {
-                availableBoys.forEach(boy => {
+                candidateBoys.forEach(boy => {
                     const boySocketId = boy.socketId
 
                     if (boySocketId) {
@@ -445,6 +452,7 @@ export const getDeliveryBoyAssignment = async (req, res) => {
         if (!riderLocationOk(me)) {
             return res.status(200).json([])
         }
+        const codBlocked = await isCodBlocked(deliveryBoyId)
         const assignments = await DeliveryAssignment.find({
             brodcastedTo: deliveryBoyId,
             status: "brodcasted"
@@ -462,6 +470,7 @@ export const getDeliveryBoyAssignment = async (req, res) => {
                 console.error('getDeliveryBoyAssignment: shopOrder not found for assignment', a._id, a.shopOrderId)
                 return result
             }
+            if (a.order.paymentMethod === "cod" && codBlocked) return result
             const dLat = a.order.deliveryAddress?.latitude, dLon = a.order.deliveryAddress?.longitude
             const km = distanceKm(me.location.coordinates[1], me.location.coordinates[0], dLat, dLon)
             if (!(km <= MAX_RIDER_KM)) return result
@@ -504,7 +513,10 @@ export const acceptOrder = async (req, res) => {
         if (!riderLocationOk(rider)) {
             return res.status(400).json({ message: "Turn on your location to accept orders" })
         }
-        const ord = await Order.findById(assignment.order).select("deliveryAddress")
+        const ord = await Order.findById(assignment.order).select("deliveryAddress paymentMethod")
+        if (ord?.paymentMethod === "cod" && await isCodBlocked(req.userId)) {
+            return res.status(400).json({ message: "Deposit your pending COD cash to accept more cash orders" })
+        }
         const kmAway = ord ? distanceKm(rider.location.coordinates[1], rider.location.coordinates[0], ord.deliveryAddress.latitude, ord.deliveryAddress.longitude) : Infinity
         if (!(kmAway <= MAX_RIDER_KM)) {
             return res.status(400).json({ message: `This order is more than ${MAX_RIDER_KM} km from you` })
@@ -720,6 +732,16 @@ export const verifyDeliveryOtp = async (req, res) => {
                 if (re) await payoutEarning(re._id)
             } catch (e) { console.error("earning credit error", e.message) }
         }
+        if (order.paymentMethod === "cod" && shopOrder.assignedDeliveryBoy) {
+            try {
+                const shopDoc2 = await Shop.findById(shopOrder.shop).select("name")
+                await CodDeposit.updateOne(
+                    { shopOrderId: shopOrder._id },
+                    { $setOnInsert: { rider: shopOrder.assignedDeliveryBoy, order: order._id, shopOrderId: shopOrder._id, shopName: shopDoc2?.name || "", amount: shopOrder.subTotal, collectedAt: new Date() } },
+                    { upsert: true }
+                )
+            } catch (e) { console.error("cod deposit error", e.message) }
+        }
         await DeliveryAssignment.deleteOne({
             shopOrderId: shopOrder._id,
             order: order._id,
@@ -821,7 +843,7 @@ export const confirmPickup = async (req, res) => {
         }
         shopOrder.status = "out of delivery"
         await order.save()
-        if (order.payment && order.paymentMethod === "online") {
+        if ((order.payment && order.paymentMethod === "online") || order.paymentMethod === "cod") {
             try {
                 const shopDoc = await Shop.findById(shopOrder.shop).select("name isListing")
                 if (shopDoc && !shopDoc.isListing) {

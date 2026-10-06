@@ -1,5 +1,5 @@
 import express from "express"
-import { getCurrentUser, updateUserLocation, saveUpiId, getMyEarnings, adminPayouts, adminMarkPaid, amIAdmin, adminSetMode } from "../controllers/user.controllers.js"
+import { getCurrentUser, updateUserLocation, saveUpiId, getMyEarnings, adminPayouts, adminMarkPaid, amIAdmin, adminSetMode, adminDepositReceived, riderStartDeposit, riderVerifyDeposit } from "../controllers/user.controllers.js"
 import isAuth from "../middlewares/isAuth.js"
 
 
@@ -12,6 +12,9 @@ userRouter.get("/earnings", isAuth, getMyEarnings)
 userRouter.get("/admin/payouts", isAuth, adminPayouts)
 userRouter.post("/admin/mark-paid", isAuth, adminMarkPaid)
 userRouter.post("/admin/payout-mode", isAuth, adminSetMode)
+userRouter.post("/admin/deposit-received", isAuth, adminDepositReceived)
+userRouter.post("/deposit/start", isAuth, riderStartDeposit)
+userRouter.post("/deposit/verify", isAuth, riderVerifyDeposit)
 userRouter.get("/admin/me", isAuth, amIAdmin)
 
 export default userRouter

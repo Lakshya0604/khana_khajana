@@ -74,6 +74,7 @@ export const cleanupQa = async () => {
     const r4 = await Shop.deleteMany({ _id: { $in: shopIds } })
     const Earning = (await import("../models/earning.model.js")).default
     await Earning.deleteMany({ $or: [{ rider: { $in: ids } }, { owner: { $in: ids } }] })
+    await (await import("../models/codDeposit.model.js")).default.deleteMany({ rider: { $in: ids } })
     const r5 = await User.deleteMany({ _id: { $in: ids } })
     console.log(`[cleanup] assignments ${r1.deletedCount}, orders ${r2.deletedCount}, items ${r3.deletedCount}, shops ${r4.deletedCount}, users ${r5.deletedCount}`)
 }

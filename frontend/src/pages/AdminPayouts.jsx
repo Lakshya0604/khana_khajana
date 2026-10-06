@@ -22,6 +22,11 @@ const AdminPayouts = () => {
             load()
         } catch (e) { setMsg(e.response?.data?.message || "Could not change mode") }
     }
+    const depositReceived = async (row) => {
+        if (!window.confirm(`Mark ₹${row.owed} COD deposit as received from ${row.name}? Do this only after the money reached you.`)) return
+        await axios.post(`${serverUrl}/api/user/admin/deposit-received`, { riderId: row.riderId }, { withCredentials: true })
+        load()
+    }
     const markPaid = async (row) => {
         if (!window.confirm(`Mark ₹${row.owed} as paid to ${row.name}? Do this only after you sent it by UPI.`)) return
         await axios.post(`${serverUrl}/api/user/admin/mark-paid`, { userId: row.userId, kind: row.kind }, { withCredentials: true })
@@ -44,6 +49,22 @@ const AdminPayouts = () => {
                     </div>
                     {!data.realConfigured && <p className='text-xs text-gray-500 mt-2'>Real mode needs a RazorpayX business account and its keys on the server.</p>}
                     {msg && <p className='text-xs text-red-500 mt-1'>{msg}</p>}
+                </div>
+                <div className='w-full max-w-3xl bg-white rounded-2xl shadow p-4 border border-orange-100'>
+                    <p className='font-semibold text-gray-800 mb-2'>COD cash riders must deposit</p>
+                    {(data.deposits || []).length === 0 && <p className='text-sm text-gray-400'>No pending deposits.</p>}
+                    {(data.deposits || []).map(r => (
+                        <div key={r.riderId} className='flex flex-wrap justify-between items-center gap-2 py-3 border-b last:border-0 text-sm'>
+                            <div>
+                                <p className='font-medium text-gray-800'>{r.name} <span className='text-xs text-gray-500'>({r.count} cash orders)</span></p>
+                                <p className='text-xs text-gray-500'>{r.mobile} - UPI: {r.upiId || 'not added'}</p>
+                            </div>
+                            <div className='flex items-center gap-3'>
+                                <span className={`font-bold ${r.owed >= 500 ? 'text-red-600' : 'text-gray-800'}`}>₹{r.owed}</span>
+                                <button onClick={() => depositReceived(r)} className='bg-green-600 text-white px-3 py-1 rounded-lg'>Received</button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
                 <p className='text-gray-700'>Total owed: <b>₹{data.totalOwed}</b></p>
                 <div className='w-full max-w-3xl bg-white rounded-2xl shadow p-4 border border-orange-100'>

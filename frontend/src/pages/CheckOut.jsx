@@ -195,7 +195,7 @@ const CheckOut = () => {
                                 <FaCreditCard className='text-blue-700 text-lg' />
                             </span>
                             <div>
-                                <p className='font-medium text-gray-800'>UPI / Credit / Debit Card</p>
+                                <p className='font-medium text-gray-800'>UPI / Credit / Debit Card <span className='ml-1 text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full'>Recommended</span></p>
                                 <p className='text-xs text-gray-500'>Pay Securely Online</p>
                             </div>
                         </div>
