@@ -51,7 +51,9 @@ function Shop() {
             <div className='max-w-7xl mx-auto px-3 sm:px-6 py-10'>
                 <h2 className='flex items-center justify-center gap-3 text-3xl font-bold mb-6 text-gray-800'><FaUtensils color='red' />Our Menu</h2>
                 {shop?.isListing && <p className='text-center text-sm text-gray-500 max-w-2xl mx-auto mb-8'>
-                    {items.length > 0
+                    {shop.sampleMenu
+                        ? <>Sample menu - prices may differ. We have not verified this restaurant's own menu yet, so these dishes and prices are indicative only. Orders are confirmed by the Khana Khajana team.</>
+                        : items.length > 0
                         ? <>Famous place listed by Khana Khajana. Dishes and prices are taken from the restaurant's public Zomato listing{shop.menuSource ? <> (<a href={shop.menuSource} target='_blank' rel='noopener noreferrer' className='underline'>source</a>)</> : null} and may differ at the restaurant. Orders are confirmed by the Khana Khajana team.</>
                         : <>Famous place listed by Khana Khajana. We could not verify a public menu yet, so ordering is not available here.</>}
                 </p>}

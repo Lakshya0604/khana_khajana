@@ -38,13 +38,17 @@ export const seedListings = async () => {
     let shops = 0, items = 0
     for (const l of data) {
         const fields = {
-            name: l.name, image: IMG, owner: owner._id, city: l.city, state: l.state, address: l.address,
+            name: l.name, image: l.image || IMG, owner: owner._id, city: l.city, state: l.state, address: l.address,
             isListing: true, listingSource: l.source, osmRef: l.osmRef || undefined,
             latitude: l.lat ?? undefined, longitude: l.lon ?? undefined,
             cuisines: l.cuisines, menuSource: l.items.length ? l.source : undefined
         }
         let shop = await Shop.findOne({ listingSource: l.source })
-        if (shop) continue // already seeded: never rebuild items (keeps item IDs stable)
+        if (shop) {
+            // already seeded: never rebuild items (keeps item IDs stable), but fill in a missing real photo
+            if (l.image && shop.image === IMG) { shop.image = l.image; await shop.save() }
+            continue
+        }
         shop = await Shop.create(fields)
         await Item.deleteMany({ shop: shop._id })
         const docs = await Item.insertMany(l.items.map(i => ({
@@ -56,7 +60,39 @@ export const seedListings = async () => {
         await shop.save()
         shops++; items += docs.length
     }
+    await fillSampleMenus(owner._id)
     console.log(`[seed] listings upserted: ${shops} shops, ${items} items`)
+}
+
+// Listing shops with no verified menu get a SAMPLE menu copied from the best-stocked listing in the same city,
+// prices nudged and the restaurant's own photo used, flagged shop.sampleMenu so the page says so. Idempotent.
+const nudge = (price, seed) => {
+    const f = 0.88 + (seed % 25) / 100 // 0.88 .. 1.12
+    return Math.max(10, Math.round((price * f) / 5) * 5)
+}
+export const fillSampleMenus = async (ownerId) => {
+    const empties = await Shop.find({ owner: ownerId, isListing: true, sampleMenu: { $ne: true }, $or: [{ items: { $size: 0 } }, { items: { $exists: false } }] })
+    let n = 0
+    for (const shop of empties) {
+        const donors = await Shop.find({ owner: ownerId, isListing: true, city: shop.city, _id: { $ne: shop._id }, sampleMenu: { $ne: true }, "items.0": { $exists: true } })
+        if (!donors.length) continue
+        const toks = x => new Set((x.cuisines || "").toLowerCase().split(/[,\s]+/).filter(w => w.length > 3))
+        const mine = toks(shop)
+        const overlap = x => [...toks(x)].filter(w => mine.has(w)).length
+        donors.sort((a, b) => (overlap(b) - overlap(a)) || (b.items.length - a.items.length))
+        const donor = donors[0]
+        const src = await Item.find({ shop: donor._id }).limit(20)
+        let seed = [...shop.name].reduce((a, c) => a + c.charCodeAt(0), 0)
+        const docs = await Item.insertMany(src.map((i, k) => ({
+            name: i.name, image: shop.image || i.image, shop: shop._id, price: nudge(i.price, seed + k * 7),
+            category: i.category, sourceCategory: i.sourceCategory, foodType: i.foodType
+        })))
+        shop.items = docs.map(d => d._id)
+        shop.sampleMenu = true
+        await shop.save()
+        n++
+    }
+    console.log(`[seed] sample menus filled: ${n} shops`)
 }
 
 // One-off: removes the QA accounts/shop/orders created while testing. Matches exact identifiers only.
@@ -75,6 +111,9 @@ export const cleanupQa = async () => {
     const Earning = (await import("../models/earning.model.js")).default
     await Earning.deleteMany({ $or: [{ rider: { $in: ids } }, { owner: { $in: ids } }] })
     await (await import("../models/codDeposit.model.js")).default.deleteMany({ rider: { $in: ids } })
+    // orphaned items whose shop no longer exists (e.g. a deleted shop)
+    const liveShops = await Shop.find().select("_id")
+    const r6 = await Item.deleteMany({ shop: { $nin: liveShops.map(x => x._id) } })
     const r5 = await User.deleteMany({ _id: { $in: ids } })
-    console.log(`[cleanup] assignments ${r1.deletedCount}, orders ${r2.deletedCount}, items ${r3.deletedCount}, shops ${r4.deletedCount}, users ${r5.deletedCount}`)
+    console.log(`[cleanup] assignments ${r1.deletedCount}, orders ${r2.deletedCount}, items ${r3.deletedCount}, shops ${r4.deletedCount}, users ${r5.deletedCount}, orphan items ${r6.deletedCount}`)
 }
