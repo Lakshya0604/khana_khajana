@@ -221,6 +221,7 @@ const CheckOut = () => {
                             <span>₹{deliveryFee}</span>
 
                         </div>
+                        <p className='text-xs text-gray-500'>Split: restaurant gets ₹{totalAmount} (food), delivery partner gets ₹{deliveryFee}.</p>
                         <div className='flex justify-between text-lg font-bold text-[#ff4d2d] pt-1'>
                             <span>Total</span>
                             <span className='text-green-500'>₹{amountWithDeliveryFee}</span>

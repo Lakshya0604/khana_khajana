@@ -12,6 +12,7 @@ const OwnerDashboard = () => {
     return (
         <div className='pt-[70px] min-h-screen bg-orange-50'>
             <Nav />
+            <div className='flex justify-end px-6 pt-3'><button className='text-sm text-[#ff4d2d] underline' onClick={() => navigate('/earnings')}>My earnings and payout UPI</button></div>
             <div>
                 {!myShopData &&
                     <div className='flex justify-center items-center p-4 sm:p-6'>

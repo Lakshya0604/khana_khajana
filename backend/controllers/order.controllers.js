@@ -693,11 +693,24 @@ export const verifyDeliveryOtp = async (req, res) => {
             try {
                 const shopDoc = await Shop.findById(shopOrder.shop).select("name")
                 await Earning.updateOne(
-                    { shopOrderId: shopOrder._id },
-                    { $setOnInsert: { rider: shopOrder.assignedDeliveryBoy, order: order._id, shopOrderId: shopOrder._id, shopName: shopDoc?.name || "", amount: DELIVERY_FEE, deliveredAt: new Date() } },
+                    { shopOrderId: shopOrder._id, kind: "rider" },
+                    { $setOnInsert: { kind: "rider", rider: shopOrder.assignedDeliveryBoy, order: order._id, shopOrderId: shopOrder._id, shopName: shopDoc?.name || "", amount: DELIVERY_FEE, deliveredAt: new Date() } },
                     { upsert: true }
                 )
             } catch (e) { console.error("earning credit error", e.message) }
+        }
+        // Owner's food share is owed by the platform only when the customer paid online (COD cash goes to the rider, not the platform)
+        if (order.payment && order.paymentMethod === "online") {
+            try {
+                const shopDoc = await Shop.findById(shopOrder.shop).select("name isListing")
+                if (shopDoc && !shopDoc.isListing && shopOrder.owner) {
+                    await Earning.updateOne(
+                        { shopOrderId: shopOrder._id, kind: "owner" },
+                        { $setOnInsert: { kind: "owner", owner: shopOrder.owner, order: order._id, shopOrderId: shopOrder._id, shopName: shopDoc.name, amount: shopOrder.subTotal, deliveredAt: new Date() } },
+                        { upsert: true }
+                    )
+                }
+            } catch (e) { console.error("owner earning credit error", e.message) }
         }
         await DeliveryAssignment.deleteOne({
             shopOrderId: shopOrder._id,

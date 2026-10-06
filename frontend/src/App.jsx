@@ -22,6 +22,7 @@ import useUpdateLocation from './hooks/useUpdateLocation'
 import TrackOrderPage from './pages/TrackOrderPage'
 import Shop from './pages/Shop'
 import Earnings from './pages/Earnings'
+import AdminPayouts from './pages/AdminPayouts'
 import CityPicker from './components/CityPicker'
 import { io } from 'socket.io-client'
 import { setSocket } from './redux/userSlice'
@@ -88,7 +89,8 @@ function App() {
       <Route path='/order-placed' element={userData ? <OrderPlaced /> : <Navigate to={"/signin"} />} />
       <Route path='/my-orders' element={userData ? <MyOrders /> : <Navigate to={"/signin"} />} />
       <Route path='/track-order/:orderId' element={userData ? <TrackOrderPage /> : <Navigate to={"/signin"} />} />
-      <Route path='/earnings' element={userData?.role === 'deliveryBoy' ? <Earnings /> : <Navigate to={"/"} />} />
+      <Route path='/earnings' element={(userData?.role === 'deliveryBoy' || userData?.role === 'owner') ? <Earnings /> : <Navigate to={"/"} />} />
+      <Route path='/admin/payouts' element={userData ? <AdminPayouts /> : <Navigate to={"/signin"} />} />
       <Route path='/shop/:shopId' element={userData ? <Shop /> : <Navigate to={"/signin"} />} />
 
       <Route path='*' element={<Navigate to={"/"} replace />} />

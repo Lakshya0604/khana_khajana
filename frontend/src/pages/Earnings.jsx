@@ -53,7 +53,7 @@ const Earnings = () => {
                 </div>
                 <div className='w-full max-w-2xl bg-white rounded-2xl shadow p-4 border border-orange-100'>
                     <h2 className='font-semibold text-gray-800 mb-1'>Payout UPI ID</h2>
-                    <p className='text-xs text-gray-500 mb-3'>Your earnings are paid to this UPI ID. Payouts are done manually by the Khana Khajana team for now.</p>
+                    <p className='text-xs text-gray-500 mb-3'>{data.role === 'owner' ? 'Your share of online orders (food total) is paid to this UPI ID.' : 'Your earnings are paid to this UPI ID.'} Payouts are done manually by the Khana Khajana team for now.</p>
                     <div className='flex gap-2'>
                         <input value={upi} onChange={(e) => setUpi(e.target.value)} placeholder='yourname@bank' className='flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400' />
                         <button onClick={saveUpi} disabled={saving} className='bg-[#ff4d2d] text-white px-4 rounded-lg text-sm'>{saving ? "Saving..." : "Save"}</button>
@@ -62,7 +62,7 @@ const Earnings = () => {
                 </div>
                 <div className='w-full max-w-2xl bg-white rounded-2xl shadow p-4 border border-orange-100'>
                     <h2 className='font-semibold text-gray-800 mb-3'>Deliveries</h2>
-                    {data.deliveries.length === 0 ? <p className='text-sm text-gray-400'>No completed deliveries yet. You earn ₹40 for every delivery.</p> :
+                    {data.deliveries.length === 0 ? <p className='text-sm text-gray-400'>{data.role === 'owner' ? 'No paid-out-eligible orders yet. Online-paid orders show here once delivered.' : 'No completed deliveries yet. You earn ₹40 for every delivery.'}</p> :
                         data.deliveries.map(d => (
                             <div key={d.id} className='flex justify-between items-center py-2 border-b last:border-0 text-sm'>
                                 <div>
