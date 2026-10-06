@@ -185,7 +185,14 @@ export const getMyOrders = async (req, res) => {
                 _id: order._id,
                 paymentMethod: order.paymentMethod,
                 user: order.user,
-                shopOrders: order.shopOrders.find(o => o.owner._id.toString() == req.userId.toString()),
+                shopOrders: (() => {
+                    const so = order.shopOrders.find(o => o.owner._id.toString() == req.userId.toString())
+                    if (!so) return so
+                    const plain = so.toObject()
+                    delete plain.deliveryOtp
+                    delete plain.otpExpires
+                    return plain
+                })(),
                 createdAt: order.createdAt,
                 deliveryAddress: order.deliveryAddress,
                 payment: order.payment
@@ -541,8 +548,14 @@ export const sendDeliveryOtp = async (req, res) => {
         shopOrder.deliveryOtp = otp
         shopOrder.otpExpires = Date.now() + 5 * 60 * 1000
         await order.save()
-        await sendDeliveryOtpMail(order.user, otp)
-        return res.status(200).json({ message: `Otp sent Successfuly to ${order?.user?.fullname}` })
+        let emailed = true
+        try {
+            await sendDeliveryOtpMail(order.user, otp)
+        } catch (mailError) {
+            emailed = false
+            console.log("delivery otp mail failed:", mailError.message)
+        }
+        return res.status(200).json({ message: emailed ? `OTP sent to ${order?.user?.fullname} by email and shown in their app` : `Email could not be sent. OTP is shown in ${order?.user?.fullname}'s app under My Orders` })
     } catch (error) {
         return res.status(500).json({ message: "delivery otp error", error: error.message })
 

@@ -68,6 +68,12 @@ const UserOrderCard = ({ data }) => {
                             </div>
                         ))}
                     </div>
+                    {shopOrder.deliveryOtp && shopOrder.otpExpires && new Date(shopOrder.otpExpires) > new Date() && shopOrder.status !== "delivered" && (
+                        <div className='bg-orange-50 border border-orange-200 rounded-lg p-3 text-center'>
+                            <p className='text-xs text-gray-600'>Delivery OTP (also sent to your email). Share it only when your order arrives.</p>
+                            <p className='text-2xl font-bold tracking-[0.3em] text-[#ff4d2d]'>{shopOrder.deliveryOtp}</p>
+                        </div>
+                    )}
                     <div className='flex justify-between items-center border-t pt-2'>
                         <p className='font-semibold'>SubTotal : {shopOrder.subTotal}</p>
                         <span className='flex gap-2 font-medium '>Status : <p className='text-sm font-medium text-blue-500'>{shopOrder.status}</p></span>
