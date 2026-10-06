@@ -3,3 +3,10 @@ Allow: /
 Disallow: /cart
 Disallow: /checkout
 Disallow: /my-orders
+Disallow: /order-placed
+Disallow: /track-order/
+Disallow: /add-item
+Disallow: /edit-item/
+Disallow: /create-edit-shop
+
+Sitemap: https://khana-khajana-2ijn.onrender.com/sitemap.xml

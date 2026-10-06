@@ -55,7 +55,20 @@ function App() {
   useEffect(() => {
     const titles = { '/signin': 'Sign in', '/signup': 'Create account', '/forgot-password': 'Reset password', '/cart': 'Your cart', '/checkout': 'Checkout', '/my-orders': 'My orders', '/order-placed': 'Order placed', '/add-item': 'Add item', '/create-edit-shop': 'Your shop' }
     const t = titles[pathname]
-    document.title = t ? `${t} | Khana Khajana` : 'Khana Khajana - Food Delivery'
+    document.title = t ? `${t} | Khana Khajana` : 'Khana Khajana - Online Food Delivery from Local Restaurants'
+    const descs = {
+      '/signin': 'Sign in to Khana Khajana to order food from local restaurants and track your delivery live.',
+      '/signup': 'Create a free Khana Khajana account to order food online, or list your restaurant, or deliver orders.',
+      '/forgot-password': 'Reset your Khana Khajana password with an email OTP.'
+    }
+    const d = descs[pathname]
+    const setMeta = (sel, attr, val) => { const el = document.querySelector(sel); if (el) el.setAttribute(attr, val) }
+    if (d) setMeta('meta[name="description"]', 'content', d)
+    const base = 'https://khana-khajana-2ijn.onrender.com'
+    const url = base + (['/signin', '/signup', '/forgot-password'].includes(pathname) ? pathname : '/')
+    setMeta('link[rel="canonical"]', 'href', url)
+    setMeta('meta[property="og:url"]', 'content', url)
+    setMeta('meta[property="og:title"]', 'content', document.title)
   }, [pathname])
   return (
     <Routes>

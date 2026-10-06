@@ -220,6 +220,9 @@ export const updateOrderStatus = async (req, res) => {
         if (!shopOrder) {
             return res.status(400).json({ message: "shop order not found" })
         }
+        if (String(shopOrder.owner) !== String(req.userId)) {
+            return res.status(403).json({ message: "only the shop owner can update this order" })
+        }
         shopOrder.status = status
         let deliveryBoysPayload = []
 
