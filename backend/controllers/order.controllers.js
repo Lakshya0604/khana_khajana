@@ -306,11 +306,20 @@ export const updateOrderStatus = async (req, res) => {
         if (String(shopOrder.owner) !== String(req.userId)) {
             return res.status(403).json({ message: "only the shop owner can update this order" })
         }
+        if (!["pending", "preparing", "ready for pickup"].includes(status)) {
+            return res.status(400).json({ message: "Use 'Rider picked up' to send the order out for delivery" })
+        }
+        if (shopOrder.status === "out of delivery" || shopOrder.status === "delivered") {
+            return res.status(400).json({ message: "This order is already out for delivery" })
+        }
+        if (status === "ready for pickup" && String(order.paymentMethod) === "online" && !order.payment) {
+            return res.status(400).json({ message: "Online payment not completed yet" })
+        }
         shopOrder.status = status
         let deliveryBoysPayload = []
 
 
-        if (status == "out of delivery" && !shopOrder.assignment) {
+        if (status == "ready for pickup" && !shopOrder.assignment) {
             const { longitude, latitude } = order.deliveryAddress
 
             const nearByDeliveryBoys = await User.find({
@@ -380,7 +389,7 @@ export const updateOrderStatus = async (req, res) => {
         await order.save()
 
         await order.populate("shopOrders.shop", "name")
-        await order.populate("shopOrders.assignedDeliveryBoy", "fullName email mobile")
+        await order.populate("shopOrders.assignedDeliveryBoy", "fullname email mobile")
         await order.populate("user", "socketId")
         const updatedShopOrder = order.shopOrders.find(o => {
             const shopField = o.shop && o.shop._id ? o.shop._id : o.shop
@@ -655,6 +664,12 @@ export const sendDeliveryOtp = async (req, res) => {
         if (!order || !shopOrder) {
             return res.status(400).json({ message: "Enter valid order/shopOrderId" })
         }
+        if (shopOrder.status !== "out of delivery") {
+            return res.status(400).json({ message: "The restaurant has not confirmed pickup yet" })
+        }
+        if (String(shopOrder.assignedDeliveryBoy) !== String(req.userId)) {
+            return res.status(403).json({ message: "only the assigned delivery partner can do this" })
+        }
         const otp = Math.floor(1000 + Math.random() * 9000).toString()
         shopOrder.deliveryOtp = otp
         shopOrder.otpExpires = Date.now() + 5 * 60 * 1000
@@ -684,6 +699,9 @@ export const verifyDeliveryOtp = async (req, res) => {
         if (shopOrder.deliveryOtp !== otp || !shopOrder.otpExpires || shopOrder.otpExpires < Date.now()) {
             return res.status(400).json({ message: "Invalid/Expired Otp" })
         }
+        if (shopOrder.status !== "out of delivery") {
+            return res.status(400).json({ message: "Order is not out for delivery" })
+        }
         shopOrder.status = "delivered"
         shopOrder.deliveredAt = Date.now()
         shopOrder.deliveryOtp = null
@@ -698,19 +716,6 @@ export const verifyDeliveryOtp = async (req, res) => {
                     { upsert: true }
                 )
             } catch (e) { console.error("earning credit error", e.message) }
-        }
-        // Owner's food share is owed by the platform only when the customer paid online (COD cash goes to the rider, not the platform)
-        if (order.payment && order.paymentMethod === "online") {
-            try {
-                const shopDoc = await Shop.findById(shopOrder.shop).select("name isListing")
-                if (shopDoc && !shopDoc.isListing && shopOrder.owner) {
-                    await Earning.updateOne(
-                        { shopOrderId: shopOrder._id, kind: "owner" },
-                        { $setOnInsert: { kind: "owner", owner: shopOrder.owner, order: order._id, shopOrderId: shopOrder._id, shopName: shopDoc.name, amount: shopOrder.subTotal, deliveredAt: new Date() } },
-                        { upsert: true }
-                    )
-                }
-            } catch (e) { console.error("owner earning credit error", e.message) }
         }
         await DeliveryAssignment.deleteOne({
             shopOrderId: shopOrder._id,
@@ -795,5 +800,43 @@ export const getTodayDeliveries = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ message: "today delivery error", error: error.message })
 
+    }
+}
+
+// Owner confirms the assigned rider collected the food. The owner's food share is credited here (escrow style).
+export const confirmPickup = async (req, res) => {
+    try {
+        const { orderId, shopOrderId } = req.body
+        const order = await Order.findById(orderId)
+        const shopOrder = order?.shopOrders?.id(shopOrderId)
+        if (!order || !shopOrder) return res.status(400).json({ message: "order not found" })
+        if (String(shopOrder.owner) !== String(req.userId)) return res.status(403).json({ message: "only the shop owner can confirm pickup" })
+        if (!shopOrder.assignedDeliveryBoy) return res.status(400).json({ message: "No delivery partner has accepted this order yet" })
+        if (shopOrder.status !== "ready for pickup") {
+            if (shopOrder.status === "out of delivery" || shopOrder.status === "delivered") return res.status(200).json({ message: "already confirmed", status: shopOrder.status })
+            return res.status(400).json({ message: "Mark the order 'ready for pickup' first" })
+        }
+        shopOrder.status = "out of delivery"
+        await order.save()
+        if (order.payment && order.paymentMethod === "online") {
+            try {
+                const shopDoc = await Shop.findById(shopOrder.shop).select("name isListing")
+                if (shopDoc && !shopDoc.isListing) {
+                    await Earning.updateOne(
+                        { shopOrderId: shopOrder._id, kind: "owner" },
+                        { $setOnInsert: { kind: "owner", owner: shopOrder.owner, order: order._id, shopOrderId: shopOrder._id, shopName: shopDoc.name, amount: shopOrder.subTotal, deliveredAt: new Date() } },
+                        { upsert: true }
+                    )
+                }
+            } catch (e) { console.error("owner earning credit error", e.message) }
+        }
+        const io = req.app.get("io")
+        if (io) {
+            await order.populate("user", "socketId")
+            if (order.user?.socketId) io.to(order.user.socketId).emit("update-status", { orderId: order._id, shopId: shopOrder.shop, userId: order.user._id, status: "out of delivery" })
+        }
+        return res.status(200).json({ message: "Pickup confirmed", status: "out of delivery" })
+    } catch (error) {
+        return res.status(500).json({ message: "confirm pickup error", error: error.message })
     }
 }

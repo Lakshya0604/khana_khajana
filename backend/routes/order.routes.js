@@ -1,5 +1,5 @@
 import express from 'express'
-import { acceptOrder, getCurrentOrder, getDeliveryBoyAssignment, getMyOrders, getOrderById, getTodayDeliveries, placeOrder, sendDeliveryOtp, updateOrderStatus, verifyDeliveryOtp, verifyPayment, getRazorpayKey, razorpayWebhook } from '../controllers/order.controllers.js'
+import { acceptOrder, getCurrentOrder, getDeliveryBoyAssignment, getMyOrders, getOrderById, getTodayDeliveries, placeOrder, sendDeliveryOtp, updateOrderStatus, verifyDeliveryOtp, verifyPayment, confirmPickup, getRazorpayKey, razorpayWebhook } from '../controllers/order.controllers.js'
 import isAuth from '../middlewares/isAuth.js'
 
 
@@ -7,6 +7,7 @@ const orderRouter = express.Router()
 
 orderRouter.post("/place-order", isAuth, placeOrder)
 orderRouter.post("/verify-payment", isAuth, verifyPayment)
+orderRouter.post("/confirm-pickup", isAuth, confirmPickup)
 orderRouter.get("/razorpay-key", isAuth, getRazorpayKey)
 orderRouter.post("/razorpay-webhook", razorpayWebhook)
 orderRouter.get("/my-orders", isAuth, getMyOrders)

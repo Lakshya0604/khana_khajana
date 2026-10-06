@@ -3,8 +3,8 @@ import { FaPhone } from "react-icons/fa6";
 import axios from 'axios'
 import { serverUrl } from '../App';
 import { useDispatch } from 'react-redux';
-import { updateOrderStatus } from '../redux/userSlice';
-import { useState } from 'react';
+import { updateOrderStatus, setMyOrders } from '../redux/userSlice';
+import { useState, useEffect } from 'react';
 const OwnerOrderCard = ({ data }) => {
     const [availableBoys, setAvailableBoys] = useState(null)
     const dispatch = useDispatch()
@@ -19,6 +19,30 @@ const OwnerOrderCard = ({ data }) => {
         }
     }
 
+
+    const [pickupMsg, setPickupMsg] = useState("")
+    const status = data.shopOrders.status
+    const hasRider = !!data.shopOrders.assignedDeliveryBoy
+    const confirmPickup = async () => {
+        setPickupMsg("")
+        try {
+            await axios.post(`${serverUrl}/api/order/confirm-pickup`, { orderId: data._id, shopOrderId: data.shopOrders._id }, { withCredentials: true })
+            dispatch(updateOrderStatus({ orderId: data._id, shopId: data.shopOrders.shop._id, status: "out of delivery" }))
+        } catch (error) {
+            setPickupMsg(error.response?.data?.message || "Could not confirm pickup")
+        }
+    }
+    // while waiting for a rider, check for acceptance every 10s
+    useEffect(() => {
+        if (status !== "ready for pickup" || hasRider) return
+        const t = setInterval(async () => {
+            try {
+                const r = await axios.get(`${serverUrl}/api/order/my-orders`, { withCredentials: true })
+                dispatch(setMyOrders(r.data))
+            } catch (e) { }
+        }, 10000)
+        return () => clearInterval(t)
+    }, [status, hasRider])
 
     return (
 
@@ -48,15 +72,20 @@ const OwnerOrderCard = ({ data }) => {
             <div className='flex justify-between items-center mt-auto pt-3 border-t border-gray-100'>
                 <span className='text-sm'>Status :<span className='font-semibold capitalize text-[#ff4d2d]'>{data.shopOrders.status}</span></span>
 
-                <select
+                {status !== "out of delivery" && status !== "delivered" ? <select
                     value={data.shopOrders.status}
                     className='rounded-md border px-3 py-1 text-sm focus:outline-none focus:ring-2 border-[#ff4d2d] text-[#ff4d2d]' onChange={(e) => handleUpdateStatus(data._id, data.shopOrders.shop._id, e.target.value)}>
                     <option value="pending">Pending</option>
                     <option value="preparing">Preparing</option>
-                    <option value="out of delivery">Out Of Delivery</option>
-                </select>
+                    <option value="ready for pickup">Ready for pickup</option>
+                </select> : <span className='text-xs text-gray-500'>Locked</span>}
             </div>
-            {data.shopOrders.status == "out of delivery" &&
+            {status === "ready for pickup" && hasRider && <div className='p-3 border border-green-200 rounded-lg bg-green-50 text-sm'>
+                <p className='text-green-800 mb-2'>{data.shopOrders.assignedDeliveryBoy.fullname} accepted this order. When they collect the food, confirm below.</p>
+                <button className='bg-green-600 text-white px-4 py-2 rounded-lg' onClick={confirmPickup}>Rider picked up the food</button>
+                {pickupMsg && <p className='text-red-500 mt-1'>{pickupMsg}</p>}
+            </div>}
+            {(status == "out of delivery" || status == "ready for pickup" || status == "delivered") &&
                 <div className='mt-3 p-2 border rounded-lg text-sm bg-orange-50'>
                     {data.shopOrders.assignedDeliveryBoy ? <p>Assigned Delivery Boy:</p> : <p>Available Delivery Boys</p>}
                     {data.shopOrders.assignedDeliveryBoy ? (
