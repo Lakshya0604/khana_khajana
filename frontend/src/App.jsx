@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import SignUp from './pages/SignUp'
 import SignIn from './pages/SignIn'
 import ForgotPassword from './pages/ForgotPassword'
@@ -20,7 +21,6 @@ import useGetMyOrders from './hooks/useGetMyOrders'
 import useUpdateLocation from './hooks/useUpdateLocation'
 import TrackOrderPage from './pages/TrackOrderPage'
 import Shop from './pages/Shop'
-import { useEffect } from 'react'
 import { io } from 'socket.io-client'
 import { setSocket } from './redux/userSlice'
 
@@ -51,6 +51,12 @@ function App() {
       socketInstance.disconnect()
     }
   }, [userData?._id])
+  const { pathname } = useLocation()
+  useEffect(() => {
+    const titles = { '/signin': 'Sign in', '/signup': 'Create account', '/forgot-password': 'Reset password', '/cart': 'Your cart', '/checkout': 'Checkout', '/my-orders': 'My orders', '/order-placed': 'Order placed', '/add-item': 'Add item', '/create-edit-shop': 'Your shop' }
+    const t = titles[pathname]
+    document.title = t ? `${t} | Khana Khajana` : 'Khana Khajana - Food Delivery'
+  }, [pathname])
   return (
     <Routes>
       <Route path='/signup' element={!userData ? <SignUp /> : <Navigate to={"/"} />} />
