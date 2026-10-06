@@ -8,7 +8,7 @@ import { HiOutlineMenuAlt3 } from "react-icons/hi"
 import { useDispatch, useSelector } from 'react-redux'
 import axios from 'axios'
 import { serverUrl } from '../App'
-import { setSearchItems, setUserData } from '../redux/userSlice'
+import { setCityPickerOpen, setSearchItems, setUserData } from '../redux/userSlice'
 import { FaPlus } from "react-icons/fa"
 import { LuReceiptIndianRupee } from "react-icons/lu";
 import { useNavigate } from 'react-router-dom'
@@ -67,7 +67,7 @@ const Nav = () => {
                 {userData.role === "user" && (
                     <div className='hidden md:flex flex-1 items-center justify-center px-6'>
                         <div className='flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white h-[38px] w-full max-w-[500px]'>
-                            <div className='flex items-center gap-1 px-3 border-r border-gray-200 min-w-fit cursor-pointer hover:bg-gray-50'>
+                            <div role='button' tabIndex={0} title='Change city' onClick={() => dispatch(setCityPickerOpen(true))} className='flex items-center gap-1 px-3 border-r border-gray-200 min-w-fit cursor-pointer hover:bg-gray-50'>
                                 <IoLocationOutline size={16} className='text-[#ff4d2d]' />
                                 <span className='text-sm text-gray-700 font-medium'>{city || 'Location'}</span>
                             </div>
@@ -199,9 +199,9 @@ const Nav = () => {
             {searchOpen && userData?.role === "user" && (
                 <div className='md:hidden px-4 pb-3'>
                     <div className='flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white h-[40px]'>
-                        <div className='flex items-center gap-1 px-3 border-r border-gray-200 min-w-fit'>
+                        <div role='button' tabIndex={0} title='Change city' onClick={() => dispatch(setCityPickerOpen(true))} className='flex items-center gap-1 px-3 border-r border-gray-200 min-w-fit cursor-pointer'>
                             <IoLocationOutline size={16} className='text-[#ff4d2d]' />
-                            <span className='text-sm text-gray-700 font-medium'>{city}</span>
+                            <span className='text-sm text-gray-700 font-medium'>{city || 'Location'}</span>
                         </div>
                         <div className='flex items-center gap-2 px-3 flex-1'>
                             <CiSearch size={16} className='text-gray-400 min-w-fit' />

@@ -21,6 +21,7 @@ import useGetMyOrders from './hooks/useGetMyOrders'
 import useUpdateLocation from './hooks/useUpdateLocation'
 import TrackOrderPage from './pages/TrackOrderPage'
 import Shop from './pages/Shop'
+import CityPicker from './components/CityPicker'
 import { io } from 'socket.io-client'
 import { setSocket } from './redux/userSlice'
 
@@ -71,6 +72,8 @@ function App() {
     setMeta('meta[property="og:title"]', 'content', document.title)
   }, [pathname])
   return (
+    <>
+    <CityPicker />
     <Routes>
       <Route path='/signup' element={!userData ? <SignUp /> : <Navigate to={"/"} />} />
       <Route path='/signin' element={!userData ? <SignIn /> : <Navigate to={"/"} />} />
@@ -88,6 +91,7 @@ function App() {
 
       <Route path='*' element={<Navigate to={"/"} replace />} />
     </Routes>
+    </>
   )
 }
 
