@@ -60,7 +60,7 @@ const SignIn = () => {
             <div className='w-full max-w-md bg-white rounded-lg shadow-md p-8 border-1.5' style={{ borderColor: borderColor }} >
                 <h1 className='font-bold text-3xl text-center ' style={{ color: primaryColor }}>KHANA KHAJANA</h1>
                 <p className='font text-gray-600 text-center mb-6 pt-6'>
-                    Sign In your account to get started with delicious food and deliveries
+                    Sign in to Khana Khajana - online food delivery in Agra. Order from local restaurants and track your delivery live.
                 </p>
 
                 {/*email*/}

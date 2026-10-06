@@ -55,7 +55,7 @@ function App() {
   useEffect(() => {
     const titles = { '/signin': 'Sign in', '/signup': 'Create account', '/forgot-password': 'Reset password', '/cart': 'Your cart', '/checkout': 'Checkout', '/my-orders': 'My orders', '/order-placed': 'Order placed', '/add-item': 'Add item', '/create-edit-shop': 'Your shop' }
     const t = titles[pathname]
-    document.title = t ? `${t} | Khana Khajana` : 'Khana Khajana - Online Food Delivery from Local Restaurants'
+    document.title = t ? `${t} | Khana Khajana` : 'Khana Khajana Agra - Online Food Delivery from Local Restaurants'
     const descs = {
       '/signin': 'Sign in to Khana Khajana to order food from local restaurants and track your delivery live.',
       '/signup': 'Create a free Khana Khajana account to order food online, or list your restaurant, or deliver orders.',
