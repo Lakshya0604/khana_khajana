@@ -1,11 +1,12 @@
 import axios from 'axios'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { serverUrl } from '../App'
 import { useDispatch } from 'react-redux'
 import { setUserData } from '../redux/userSlice'
 
 function useGetCurrentUser() {
     const dispatch = useDispatch()
+    const [checked, setChecked] = useState(false)
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -15,9 +16,11 @@ function useGetCurrentUser() {
             } catch (error) {
                 console.log(error)
             }
+            setChecked(true)
         }
         fetchUser()
     }, [])
+    return checked
 }
 
 export default useGetCurrentUser

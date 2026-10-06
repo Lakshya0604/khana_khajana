@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
         required: false,
         unique: false
     },
+    blocked: { type: Boolean, default: false },
     role: {
         type: String,
         enum: ["user", "owner", "deliveryBoy"],

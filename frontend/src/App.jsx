@@ -23,6 +23,7 @@ import TrackOrderPage from './pages/TrackOrderPage'
 import Shop from './pages/Shop'
 import Earnings from './pages/Earnings'
 import AdminPayouts from './pages/AdminPayouts'
+import AdminPage from './pages/AdminPage'
 import CityPicker from './components/CityPicker'
 import { io } from 'socket.io-client'
 import { setSocket } from './redux/userSlice'
@@ -30,7 +31,7 @@ import { setSocket } from './redux/userSlice'
 export const serverUrl = import.meta.env.VITE_SERVER_URL
 
 function App() {
-  useGetCurrentUser()
+  const authChecked = useGetCurrentUser()
   useUpdateLocation()
   useGetCity()
   useGetMyShop()
@@ -50,7 +51,8 @@ function App() {
         socketInstance.emit('identity', { userId: userData._id })
       }
     })
-    return () => {
+    if (!authChecked) return <div className='min-h-screen flex items-center justify-center text-gray-400'>Loading...</div>
+  return () => {
       socketInstance.disconnect()
     }
   }, [userData?._id])
@@ -90,6 +92,7 @@ function App() {
       <Route path='/my-orders' element={userData ? <MyOrders /> : <Navigate to={"/signin"} />} />
       <Route path='/track-order/:orderId' element={userData ? <TrackOrderPage /> : <Navigate to={"/signin"} />} />
       <Route path='/earnings' element={(userData?.role === 'deliveryBoy' || userData?.role === 'owner') ? <Earnings /> : <Navigate to={"/"} />} />
+      <Route path='/admin' element={userData ? <AdminPage /> : <Navigate to={"/signin"} />} />
       <Route path='/admin/payouts' element={userData ? <AdminPayouts /> : <Navigate to={"/signin"} />} />
       <Route path='/shop/:shopId' element={userData ? <Shop /> : <Navigate to={"/signin"} />} />
 

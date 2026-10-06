@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { serverUrl } from '../App'
 
-const AdminPayouts = () => {
+const AdminPayouts = ({ embedded }) => {
     const navigate = useNavigate()
     const [data, setData] = useState(null)
     const [error, setError] = useState("")
@@ -33,11 +33,11 @@ const AdminPayouts = () => {
         load()
     }
     return (
-        <div className='min-h-screen bg-[#fff9f6] p-4 flex flex-col items-center gap-4'>
-            <div className='w-full max-w-3xl flex items-center gap-3'>
+        <div className={embedded ? 'flex flex-col items-center gap-4' : 'min-h-screen bg-[#fff9f6] p-4 flex flex-col items-center gap-4'}>
+            {!embedded && <div className='w-full max-w-3xl flex items-center gap-3'>
                 <button onClick={() => navigate("/")} className='text-[#ff4d2d]'>Back</button>
                 <h1 className='text-xl font-bold text-gray-800'>Payouts owed (not yet paid)</h1>
-            </div>
+            </div>}
             {error && <p className='text-red-500'>{error}</p>}
             {data && <>
                 <div className='w-full max-w-3xl bg-white rounded-2xl shadow p-4 border border-orange-100 text-sm'>

@@ -75,7 +75,7 @@ export const getMyEarnings = async (req, res) => {
     }
 }
 
-const isAdmin = async (userId) => {
+export const isAdmin = async (userId) => {
     const admins = String(process.env.ADMIN_EMAILS || "").toLowerCase().split(",").map(x => x.trim()).filter(Boolean)
     if (!admins.length) return false
     const u = await User.findById(userId).select("email")

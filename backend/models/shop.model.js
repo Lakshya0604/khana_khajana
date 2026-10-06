@@ -28,6 +28,7 @@ const shopSchema = new mongoose.Schema({
     },
     // Display-only listing seeded from public data. Never has real contact details; order mail goes to the platform inbox.
     isListing: { type: Boolean, default: false },
+    hidden: { type: Boolean, default: false },
     listingSource: { type: String },
     osmRef: { type: String },
     cuisines: { type: String },

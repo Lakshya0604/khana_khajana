@@ -95,7 +95,8 @@ export const getItemByCity = async (req, res) => {
             return res.status(400).json({ message: "city is required" })
         }
         const shops = await Shop.find({
-            city: { $regex: new RegExp(`^${city}$`, "i") }
+            city: { $regex: new RegExp(`^${city}$`, "i") },
+            hidden: { $ne: true }
         }).populate('items')
         if (!shops) {
             return res.status(400).json({ message: "Shops not found" })
@@ -136,7 +137,8 @@ export const searchItems = async (req, res) => {
         const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
         const q = esc(query)
         const shops = await Shop.find({
-            city: { $regex: new RegExp(`^${esc(city)}$`, "i") }
+            city: { $regex: new RegExp(`^${esc(city)}$`, "i") },
+            hidden: { $ne: true }
         }).select("_id name cuisines")
         const shopIds = shops.map(s => s._id)
         const matchShopIds = shops

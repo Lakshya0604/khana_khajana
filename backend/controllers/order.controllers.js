@@ -326,6 +326,7 @@ export const updateOrderStatus = async (req, res) => {
 
             const nearByDeliveryBoys = await User.find({
                 role: "deliveryBoy",
+                blocked: { $ne: true },
                 locationUpdatedAt: { $gte: new Date(Date.now() - LOCATION_FRESH_MS) },
                 location: {
                     $near: {

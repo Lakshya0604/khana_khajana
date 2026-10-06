@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken"
+import User from "../models/user.model.js"
 const isAuth = async (req, res, next) => {
     try {
         const token = req.cookies.token
@@ -11,6 +12,8 @@ const isAuth = async (req, res, next) => {
         }
 
         req.userId = decodeToken.userId
+        const u = await User.findById(req.userId).select("blocked").lean()
+        if (u?.blocked) return res.status(403).json({ message: "This account has been blocked. Contact Khana Khajana support." })
         next()
 
     } catch (error) {
