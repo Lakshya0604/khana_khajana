@@ -58,3 +58,20 @@ export const seedListings = async () => {
     }
     console.log(`[seed] listings upserted: ${shops} shops, ${items} items`)
 }
+
+// One-off: removes the QA accounts/shop/orders created while testing. Matches exact identifiers only.
+export const cleanupQa = async () => {
+    const Order = (await import("../models/order.model.js")).default
+    const DA = (await import("../models/deliveryAssignment.model.js")).default
+    const users = await User.find({ email: { $in: ["qa.loc@example.com", "lakshyayaduvanshi28+khowner@gmail.com"] } })
+    const ids = users.map(u => u._id)
+    const shops = await Shop.find({ owner: { $in: ids }, name: "QA Test Shop" })
+    const shopIds = shops.map(s => s._id)
+    const orders = await Order.find({ $or: [{ user: { $in: ids } }, { "shopOrders.owner": { $in: ids } }] }).select("_id")
+    const r1 = await DA.deleteMany({ order: { $in: orders.map(o => o._id) } })
+    const r2 = await Order.deleteMany({ _id: { $in: orders.map(o => o._id) } })
+    const r3 = await Item.deleteMany({ shop: { $in: shopIds } })
+    const r4 = await Shop.deleteMany({ _id: { $in: shopIds } })
+    const r5 = await User.deleteMany({ _id: { $in: ids } })
+    console.log(`[cleanup] assignments ${r1.deletedCount}, orders ${r2.deletedCount}, items ${r3.deletedCount}, shops ${r4.deletedCount}, users ${r5.deletedCount}`)
+}

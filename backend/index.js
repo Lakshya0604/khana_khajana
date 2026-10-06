@@ -47,6 +47,9 @@ app.use("/api/order", orderRouter)
 socketHandler(io)
 server.listen(port, () => {
     Promise.resolve(connectDb()).then(async () => {
+        if (process.env.CLEANUP_QA === '1') {
+            try { const { cleanupQa } = await import('./seed/seedListings.js'); await cleanupQa() } catch (e) { console.log('[cleanup] failed', e.message) }
+        }
         if (process.env.SEED_LISTINGS === '1') {
             try { const { seedListings } = await import('./seed/seedListings.js'); await seedListings() } catch (e) { console.log('[seed] failed', e.message) }
         }
