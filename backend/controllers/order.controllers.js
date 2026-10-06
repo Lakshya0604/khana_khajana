@@ -23,6 +23,7 @@ const notifyShops = async (order) => {
         }
     }
 }
+import crypto from "crypto"
 import Razorpay from "razorpay"
 import dotenv, { parse } from "dotenv"
 dotenv.config()
@@ -153,46 +154,90 @@ export const placeOrder = async (req, res) => {
     }
 }
 
+// Marks an online order as paid exactly once and fires the shop notifications.
+const finalizePaid = async (order, paymentId, io) => {
+    if (order.payment) return order
+    order.payment = true
+    order.razorpayPaymentId = paymentId
+    await order.save()
+    await order.populate("shopOrders.shop", "name socketId")
+    await order.populate("user", "fullname name email mobile")
+    await order.populate("shopOrders.shopOrderItems.item", "name image price")
+    if (io) {
+        order.shopOrders.forEach(shopOrder => {
+            const ownerSocketId = shopOrder.owner?.socketId
+            if (ownerSocketId) {
+                io.to(ownerSocketId).emit('newOrder', {
+                    _id: order._id,
+                    paymentMethod: order.paymentMethod,
+                    user: order.user,
+                    shopOrders: shopOrder,
+                    createdAt: order.createdAt,
+                    deliveryAddress: order.deliveryAddress,
+                    payment: order.payment
+                })
+            }
+        })
+    }
+    notifyShops(order).catch(() => { })
+    return order
+}
+
+export const getRazorpayKey = (req, res) => {
+    // Key ID is public by design; the secret never leaves the server
+    return res.status(200).json({ keyId: process.env.RAZORPAY_KEY_ID || null })
+}
+
 export const verifyPayment = async (req, res) => {
     try {
-        const { razorpay_payment_id, orderId } = req.body
-        const payment = await instance.payments.fetch(razorpay_payment_id)
-        if (!payment || payment.status !== "captured") {
-            return res.status(400).json({ message: "payment not successful" })
+        const { razorpay_payment_id, razorpay_order_id, razorpay_signature, orderId } = req.body
+        if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !orderId) {
+            return res.status(400).json({ message: "payment details missing" })
+        }
+        const expected = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`).digest("hex")
+        const a = Buffer.from(expected), b = Buffer.from(String(razorpay_signature))
+        if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+            return res.status(400).json({ message: "payment signature mismatch" })
         }
         const order = await Order.findById(orderId)
-        if (!order) {
+        if (!order || String(order.user) !== String(req.userId) || order.razorpayOrderId !== razorpay_order_id) {
             return res.status(400).json({ message: "order not found" })
         }
-        order.payment = true
-        order.razorpayPaymentId = razorpay_payment_id
-        await order.save()
-
-        await order.populate("shopOrders.shop", "name socketId")
-        await order.populate("user", "fullname name email mobile")
-        await order.populate("shopOrders.shopOrderItems.item", "name image price")
-
-        const io = req.app.get('io')
-        if (io) {
-            order.shopOrders.forEach(shopOrder => {
-                const ownerSocketId = shopOrder.owner.socketId
-                if (ownerSocketId) {
-                    io.to(ownerSocketId).emit('newOrder', {
-                        _id: order._id,
-                        paymentMethod: order.paymentMethod,
-                        user: order.user,
-                        shopOrders: shopOrder,
-                        createdAt: order.createdAt,
-                        deliveryAddress: order.deliveryAddress,
-                        payment: order.payment
-                    })
-                }
-            });
+        const payment = await instance.payments.fetch(razorpay_payment_id)
+        if (!payment || payment.status !== "captured" || payment.order_id !== razorpay_order_id || Number(payment.amount) !== Math.round(order.totalAmount * 100)) {
+            return res.status(400).json({ message: "payment not successful" })
         }
-        notifyShops(order).catch(() => { })
-        return res.status(200).json(order)
+        const done = await finalizePaid(order, razorpay_payment_id, req.app.get('io'))
+        return res.status(200).json(done)
     } catch (error) {
         return res.status(500).json({ message: "verify payment error", error: error.message })
+    }
+}
+
+// Razorpay server-to-server webhook: covers the case where the customer closes the tab right after paying
+export const razorpayWebhook = async (req, res) => {
+    try {
+        const secret = process.env.RAZORPAY_WEBHOOK_SECRET
+        if (!secret) return res.status(503).json({ message: "webhook not configured" })
+        const sig = String(req.headers["x-razorpay-signature"] || "")
+        const expected = crypto.createHmac("sha256", secret).update(req.rawBody || "").digest("hex")
+        const a = Buffer.from(expected), b = Buffer.from(sig)
+        if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+            return res.status(400).json({ message: "invalid signature" })
+        }
+        const evt = req.body
+        if (evt?.event === "payment.captured") {
+            const pay = evt.payload?.payment?.entity
+            const order = pay?.order_id ? await Order.findOne({ razorpayOrderId: pay.order_id }) : null
+            if (order && Number(pay.amount) === Math.round(order.totalAmount * 100)) {
+                await finalizePaid(order, pay.id, req.app.get('io'))
+            }
+        }
+        return res.status(200).json({ ok: true })
+    } catch (error) {
+        console.error("razorpay webhook error", error.message)
+        return res.status(500).json({ message: "webhook error" })
     }
 }
 

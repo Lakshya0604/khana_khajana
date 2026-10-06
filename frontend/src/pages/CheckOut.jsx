@@ -106,9 +106,14 @@ const CheckOut = () => {
         }
     }
 
-    const openRazorpayWindow = (orderId, razorOrder) => {
+    const openRazorpayWindow = async (orderId, razorOrder) => {
+        let keyId = import.meta.env.VITE_RAZORPAY_KEY_ID
+        try {
+            const k = await axios.get(`${serverUrl}/api/order/razorpay-key`, { withCredentials: true })
+            if (k.data?.keyId) keyId = k.data.keyId
+        } catch (e) { console.log(e) }
         const options = {
-            key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+            key: keyId,
             amount: razorOrder.amount,
             currency: razorOrder.currency,
             name: "Khana Khajana",
@@ -118,6 +123,8 @@ const CheckOut = () => {
                 try {
                     const result = await axios.post(`${serverUrl}/api/order/verify-payment`, {
                         razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature,
                         orderId
                     }, { withCredentials: true })
                     dispatch(addMyOrder(result.data))
