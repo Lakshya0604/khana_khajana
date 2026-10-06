@@ -5,30 +5,41 @@ import CategaoryCard from './CategaoryCard'
 import { useSelector } from 'react-redux'
 import FoodCard from './FoodCard.jsx'
 import { useState } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 
 const UserDashboard = () => {
     const { city, shopsInMyCity, itemsInMyCity, searchItems } = useSelector(state => state.user)
-    const [updatedItemsList, setUpdatedItemsList] = useState([])
+    const [activeCategory, setActiveCategory] = useState("All")
+    const [diet, setDiet] = useState("all")
+    const [sort, setSort] = useState("default")
+    const [visible, setVisible] = useState(40)
     const navigate = useNavigate()
     const hasShops = Array.isArray(shopsInMyCity) && shopsInMyCity.length > 0
 
 
+    // Tile labels differ from the stored category names for these two
+    const CATEGORY_ALIAS = { "desserts": "Dessert", "sandwitches": "Sandwitches" }
     const handleFilterByCategory = (category) => {
-        if (category == "All") {
-            setUpdatedItemsList(itemsInMyCity)
-        }
-        else {
-            const filteredList = itemsInMyCity?.filter(i => i.category === category)
-            setUpdatedItemsList(filteredList)
-        }
+        setActiveCategory(category)
+        setVisible(40)
     }
 
-    useEffect(() => {
-        setUpdatedItemsList(itemsInMyCity)
-    }, [itemsInMyCity])
+    const updatedItemsList = useMemo(() => {
+        let list = Array.isArray(itemsInMyCity) ? itemsInMyCity : []
+        if (activeCategory !== "All") {
+            const want = CATEGORY_ALIAS[activeCategory.toLowerCase()] || activeCategory
+            list = list.filter(i => i.category === want)
+        }
+        if (diet === "veg") list = list.filter(i => i.foodType === "veg")
+        if (diet === "nonveg") list = list.filter(i => i.foodType === "non veg")
+        if (sort === "low") list = [...list].sort((x, y) => x.price - y.price)
+        if (sort === "high") list = [...list].sort((x, y) => y.price - x.price)
+        return list
+    }, [itemsInMyCity, activeCategory, diet, sort])
+
+    useEffect(() => { setVisible(40) }, [diet, sort, city])
 
     return (
         <div className='w-full overflow-x-hidden'>
@@ -44,6 +55,10 @@ const UserDashboard = () => {
                 </div>
             )}
 
+            {Array.isArray(searchItems) && searchItems.length === 0 && (
+                <p className='w-full max-w-6xl mx-auto text-center text-gray-500 bg-white shadow-md rounded-2xl mt-4 p-4'>No dishes or restaurants found for your search in {city || 'this city'}.</p>
+            )}
+
             <div className='w-full max-w-6xl mx-auto flex flex-col gap-2 sm:gap-5 items-start px-2 sm:px-4 lg:px-6 py-2'>
                 <div className='flex items-center justify-between w-full'>
                     <h1 className='text-gray-700 text-lg sm:text-2xl lg:text-3xl'>Inspiration for your first order</h1>
@@ -53,7 +68,7 @@ const UserDashboard = () => {
                     <div className='w-full flex overflow-x-auto gap-2 sm:gap-3 pb-2 scrollbar-thin scrollbar-thumb-[#ff4d2d] scrollbar-track-transparent scroll-smooth mt-0'>
                         {categories.map((cate, index) => (
                             <div className='flex-shrink-0' key={index}>
-                                <CategaoryCard name={cate.category} image={cate.image} onClick={() => handleFilterByCategory(cate.category)} />
+                                <div className={activeCategory === cate.category ? 'rounded-xl ring-2 ring-[#ff4d2d]' : ''}><CategaoryCard name={cate.category} image={cate.image} onClick={() => handleFilterByCategory(cate.category)} /></div>
                             </div>
                         ))}
                     </div>
@@ -91,15 +106,32 @@ const UserDashboard = () => {
                 </div>
             </div>
 
+            <div className='w-full max-w-6xl mx-auto flex flex-wrap items-center gap-2 px-3 sm:px-6 pb-3'>
+                {[['all', 'All'], ['veg', 'Veg'], ['nonveg', 'Non-veg']].map(([v, label]) => (
+                    <button key={v} onClick={() => setDiet(v)} className={`px-3 py-1.5 rounded-full text-sm border ${diet === v ? 'bg-[#ff4d2d] text-white border-[#ff4d2d]' : 'bg-white text-gray-700 border-gray-300'}`}>{label}</button>
+                ))}
+                <select value={sort} onChange={(e) => setSort(e.target.value)} className='ml-auto px-3 py-1.5 rounded-full text-sm border border-gray-300 bg-white text-gray-700'>
+                    <option value='default'>Sort: Relevance</option>
+                    <option value='low'>Price: Low to High</option>
+                    <option value='high'>Price: High to Low</option>
+                </select>
+                <span className='w-full text-xs text-gray-500'>{updatedItemsList.length} item{updatedItemsList.length === 1 ? '' : 's'}{activeCategory !== 'All' ? ` in ${activeCategory}` : ''}</span>
+            </div>
+
             <div className='w-full grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-[20px] justify-center px-3 sm:px-2 lg:px-0 pb-4'>
-                {updatedItemsList && updatedItemsList.length > 0 ? (
-                    updatedItemsList.map((item, index) => (
-                        <FoodCard key={index} data={item} />
+                {updatedItemsList.length > 0 ? (
+                    updatedItemsList.slice(0, visible).map((item) => (
+                        <FoodCard key={item._id} data={item} />
                     ))
                 ) : (
-                    <p className='text-gray-500 py-4 col-span-2'>No food items available in your city right now.</p>
+                    <p className='text-gray-500 py-4 col-span-2'>{itemsInMyCity && itemsInMyCity.length > 0 ? 'No items match these filters. Try another category or clear Veg/Non-veg.' : 'No food items available in your city right now.'}</p>
                 )}
             </div>
+            {updatedItemsList.length > visible && (
+                <div className='w-full flex justify-center pb-10'>
+                    <button onClick={() => setVisible(v => v + 40)} className='px-6 py-2 rounded-full bg-[#ff4d2d] text-white text-sm font-medium'>Show more ({updatedItemsList.length - visible} left)</button>
+                </div>
+            )}
         </div>
     )
 }

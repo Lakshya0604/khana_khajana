@@ -128,24 +128,29 @@ export const getItemsByShop = async (req, res) => {
 
 export const searchItems = async (req, res) => {
     try {
-        const { query, city } = req.query
+        const query = String(req.query.query || "").trim().slice(0, 60)
+        const city = String(req.query.city || "").trim()
         if (!query || !city) {
-            return null
+            return res.status(200).json([])
         }
+        const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        const q = esc(query)
         const shops = await Shop.find({
-            city: { $regex: new RegExp(`^${city}$`, "i") }
-        }).populate('items')
-        if (!shops) {
-            return res.status(400).json({ message: "Shops not found" })
-        }
+            city: { $regex: new RegExp(`^${esc(city)}$`, "i") }
+        }).select("_id name cuisines")
         const shopIds = shops.map(s => s._id)
+        const matchShopIds = shops
+            .filter(s => new RegExp(q, "i").test(`${s.name} ${s.cuisines || ""}`))
+            .map(s => s._id)
         const items = await Item.find({
             shop: { $in: shopIds },
             $or: [
-                { name: { $regex: query, $options: "i" } },
-                { category: { $regex: query, $options: "i" } }
+                { name: { $regex: q, $options: "i" } },
+                { category: { $regex: q, $options: "i" } },
+                { sourceCategory: { $regex: q, $options: "i" } },
+                { shop: { $in: matchShopIds } }
             ]
-        }).populate("shop", "name image")
+        }).limit(80).populate("shop", "name image")
         return res.status(200).json(items)
     }
     catch (error) {

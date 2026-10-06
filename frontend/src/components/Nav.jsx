@@ -35,7 +35,7 @@ const Nav = () => {
 
     const handleSerchItems = async () => {
         try {
-            const result = await axios.get(`${serverUrl}/api/item/search-items?query=${query}&city=${city}`, { withCredentials: true })
+            const result = await axios.get(`${serverUrl}/api/item/search-items?query=${encodeURIComponent(query.trim())}&city=${encodeURIComponent(city || '')}`, { withCredentials: true })
             dispatch(setSearchItems(result.data))
         } catch (error) {
             console.log(error)
@@ -43,12 +43,13 @@ const Nav = () => {
     }
 
     useEffect(() => {
-        if (query) {
-            handleSerchItems()
-        } else {
+        if (!query.trim()) {
             dispatch(setSearchItems(null))
+            return
         }
-    }, [query])
+        const t = setTimeout(() => handleSerchItems(), 350)
+        return () => clearTimeout(t)
+    }, [query, city])
     return (
         <div className='fixed top-0 left-0 w-full bg-white border-b border-gray-100 z-[9999]'>
 
