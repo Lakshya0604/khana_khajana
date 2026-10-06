@@ -19,6 +19,8 @@ const DeliveryBoy = () => {
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState("")
     const navigate = useNavigate()
+    const [locState, setLocState] = useState("checking") // checking | on | off
+    const [earn, setEarn] = useState(null)
 
     useEffect(() => {
         if (!socket || userData.role !== 'deliveryBoy') return
@@ -28,6 +30,8 @@ const DeliveryBoy = () => {
                 const latitude = position.coords.latitude
                 const longitude = position.coords.longitude
                 setDeliveryBoyLocation({ lat: latitude, lon: longitude })
+                setLocState("on")
+                axios.post(`${serverUrl}/api/user/update-location`, { lat: latitude, lon: longitude }, { withCredentials: true }).catch(() => { })
                 socket.emit('updateLocation', {
                     latitude,
                     longitude,
@@ -36,6 +40,7 @@ const DeliveryBoy = () => {
             },
                 (error) => {
                     console.log(error)
+                    setLocState("off")
                 },
                 {
                     enableHighAccuracy: true
@@ -47,8 +52,24 @@ const DeliveryBoy = () => {
     }, [socket, userData])
 
 
-    const ratePerDelivery = 50
-    const totalEarning = todayDeliveries.reduce((sum, d) => sum + d.count * ratePerDelivery, 0)
+    const loadEarnings = async () => {
+        try {
+            const r = await axios.get(`${serverUrl}/api/user/earnings`, { withCredentials: true })
+            setEarn(r.data)
+        } catch (e) { console.log(e) }
+    }
+    const retryLocation = () => {
+        setLocState("checking")
+        navigator.geolocation?.getCurrentPosition(
+            (p) => {
+                setDeliveryBoyLocation({ lat: p.coords.latitude, lon: p.coords.longitude })
+                setLocState("on")
+                axios.post(`${serverUrl}/api/user/update-location`, { lat: p.coords.latitude, lon: p.coords.longitude }, { withCredentials: true }).then(() => getAssignments()).catch(() => { })
+            },
+            () => setLocState("off"),
+            { enableHighAccuracy: true }
+        )
+    }
 
 
 
@@ -147,6 +168,7 @@ const DeliveryBoy = () => {
         getAssignments()
         getCurrentOrder()
         handleTodayDeliveries()
+        loadEarnings()
     }, [userData])
     return (
         <div className='w-screen min-h-screen flex flex-col gap-5 items-center bg-[#fff9f6] overflow-y-auto'>
@@ -170,10 +192,18 @@ const DeliveryBoy = () => {
                     </ResponsiveContainer>
                     <div className='max-w-sm mx-auto  mb-6 pt-5 bg-white rounded-2xl shadow-lg text-center'>
                         <h1 className='text-xl font-semibold text-gray-800 mb-2'>Today's Earning</h1>
-                        <span className='text-3xl font-bold text-green-600 p-2'>₹{totalEarning}</span>
+                        <span className='text-3xl font-bold text-green-600 p-2'>₹{earn ? earn.today : 0}</span>
+                        <p className='text-xs text-gray-500 pb-1'>₹40 per delivery</p>
+                        <button className='mb-4 text-sm text-[#ff4d2d] underline' onClick={() => navigate('/earnings')}>View all earnings and set payout UPI</button>
                     </div>
                 </div>
-                {!currentOrder && <div className='bg-white rounded-2xl p-5 shadow-md w-[90%] border border-orange-100 '>
+                {earn && !earn.upiId && <div className='bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-[90%] text-sm text-yellow-800'>Add your payout UPI ID to get paid. <button className='underline' onClick={() => navigate('/earnings')}>Add now</button></div>}
+                {locState !== "on" && <div className='bg-white rounded-2xl p-5 shadow-md w-[90%] border border-red-200 text-center'>
+                    <h2 className='text-lg font-bold text-red-500 mb-2'>Turn on your location</h2>
+                    <p className='text-sm text-gray-600 mb-3'>{locState === "checking" ? "Checking your location..." : "Orders are only shown to delivery partners with location ON, and only within 5 km of you. Allow location access in your browser, then tap the button."}</p>
+                    <button className='bg-[#ff4d2d] text-white px-4 py-2 rounded-lg text-sm' onClick={retryLocation}>Turn on location</button>
+                </div>}
+                {locState === "on" && !currentOrder && <div className='bg-white rounded-2xl p-5 shadow-md w-[90%] border border-orange-100 '>
                     <h1 className='text-lg font-bold mb-4 flex items-center gap-2'>Available Order</h1>
                     <div className='space-y-4'>
                         {availableAssignment?.length > 0
@@ -187,6 +217,7 @@ const DeliveryBoy = () => {
                                             </p>
                                             <p className='text-sm text-gray-500'><span className='text-gray-800'>Delivery Address : </span>{a?.deliveryAddress.text}</p>
                                             <p className='text-sm text-gray-500'><span className='text-gray-800 '>No Of Items and Total : </span>{a.items.length} || {a.subTotal}</p>
+                                            <p className='text-sm text-green-600 font-medium'>You earn ₹40{a.distanceKm !== undefined ? ` - ${a.distanceKm} km from you` : ''}</p>
                                         </div>
                                         <button className='bg-orange-400 text-white px-4 py-1 rounded-lg text-sm hover:bg-orange-500 cursor-pointer' onClick={() => acceptOrder(a.assignmentId)}>Accept</button>
                                     </div>

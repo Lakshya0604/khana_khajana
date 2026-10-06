@@ -76,6 +76,7 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    deliveryFee: { type: Number, default: 0 },
     shopOrders: [shopOrderSchema],
     payment: {
         type: Boolean,

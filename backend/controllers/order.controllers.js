@@ -2,6 +2,9 @@ import Shop from "../models/shop.model.js"
 import Order from "../models/order.model.js"
 import User from "../models/user.model.js"
 import DeliveryAssignment from "../models/deliveryAssignment.model.js"
+import Item from "../models/item.model.js"
+import Earning from "../models/earning.model.js"
+import { DELIVERY_FEE, MAX_RIDER_KM, LOCATION_FRESH_MS, distanceKm, riderLocationOk } from "../utils/delivery.js"
 import { sendDeliveryOtpMail, sendNewOrderMail } from "../utils/mail.js"
 
 // Emails each shop about its part of an order. Listing shops route to the platform inbox (MAIL_FROM), never the business.
@@ -32,7 +35,7 @@ let instance = new Razorpay({
 
 export const placeOrder = async (req, res) => {
     try {
-        const { cartItems, paymentMethod, deliveryAddress, totalAmount } = req.body
+        const { cartItems, paymentMethod, deliveryAddress } = req.body
         if (!cartItems || cartItems.length === 0) {
             return res.status(400).json({ message: "cart is empty" })
         }
@@ -58,20 +61,34 @@ export const placeOrder = async (req, res) => {
             if (!shop) {
                 return res.status(400).json({ message: `shop not found: ${shopId}` })
             }
-            const items = groupItemsByShop[shopId]
+            const rawItems = groupItemsByShop[shopId]
+            // Prices and names always come from the database, never from the client
+            const items = []
+            for (const ri of rawItems) {
+                const dbItem = await Item.findById(ri._id || ri.id)
+                const qty = Math.floor(Number(ri.quantity))
+                if (!dbItem || String(dbItem.shop) !== String(shop._id) || !(qty >= 1)) {
+                    return res.status(400).json({ message: "cart has an invalid item, please refresh your cart" })
+                }
+                items.push({ _id: dbItem._id, price: dbItem.price, quantity: qty, name: dbItem.name })
+            }
             const subTotal = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity), 0)
             shopOrders.push({
                 shop: shop._id,
                 owner: shop.owner._id,
                 subTotal,
                 shopOrderItems: items.map((i) => ({
-                    item: i._id || i.id,
+                    item: i._id,
                     price: i.price,
                     quantity: i.quantity,
                     name: i.name
                 }))
             })
         }
+
+        // Flat Rs 40 delivery charge for every restaurant delivery in the order
+        const deliveryFee = DELIVERY_FEE * shopOrders.length
+        const totalAmount = shopOrders.reduce((t, so) => t + so.subTotal, 0) + deliveryFee
 
         if (paymentMethod === "online") {
             const razorOrder = await instance.orders.create({
@@ -84,6 +101,7 @@ export const placeOrder = async (req, res) => {
                 paymentMethod,
                 deliveryAddress,
                 totalAmount,
+                deliveryFee,
                 shopOrders,
                 razorpayOrderId: razorOrder.id,
                 payment: false
@@ -100,6 +118,7 @@ export const placeOrder = async (req, res) => {
             paymentMethod,
             deliveryAddress,
             totalAmount,
+            deliveryFee,
             shopOrders
         })
         await newOrder.populate("shopOrders.shopOrderItems.item", "name image price")
@@ -251,10 +270,11 @@ export const updateOrderStatus = async (req, res) => {
 
             const nearByDeliveryBoys = await User.find({
                 role: "deliveryBoy",
+                locationUpdatedAt: { $gte: new Date(Date.now() - LOCATION_FRESH_MS) },
                 location: {
                     $near: {
                         $geometry: { type: "Point", coordinates: [Number(longitude), Number(latitude)] },
-                        $maxDistance: 5000
+                        $maxDistance: MAX_RIDER_KM * 1000
                     }
                 }
             })
@@ -366,6 +386,10 @@ export const updateOrderStatus = async (req, res) => {
 export const getDeliveryBoyAssignment = async (req, res) => {
     try {
         const deliveryBoyId = req.userId
+        const me = await User.findById(deliveryBoyId).select("location locationUpdatedAt")
+        if (!riderLocationOk(me)) {
+            return res.status(200).json([])
+        }
         const assignments = await DeliveryAssignment.find({
             brodcastedTo: deliveryBoyId,
             status: "brodcasted"
@@ -383,7 +407,12 @@ export const getDeliveryBoyAssignment = async (req, res) => {
                 console.error('getDeliveryBoyAssignment: shopOrder not found for assignment', a._id, a.shopOrderId)
                 return result
             }
+            const dLat = a.order.deliveryAddress?.latitude, dLon = a.order.deliveryAddress?.longitude
+            const km = distanceKm(me.location.coordinates[1], me.location.coordinates[0], dLat, dLon)
+            if (!(km <= MAX_RIDER_KM)) return result
             result.push({
+                distanceKm: Math.round(km * 10) / 10,
+                deliveryFee: DELIVERY_FEE,
                 assignmentId: a._id,
                 orderId: a.order._id,
                 shopName: a.shop?.name || "",
@@ -409,6 +438,21 @@ export const acceptOrder = async (req, res) => {
         }
         if (assignment.status !== "brodcasted") {
             return res.status(400).json({ message: "assignment is expired" })
+        }
+        if (!assignment.brodcastedTo.some(id => String(id) === String(req.userId))) {
+            return res.status(403).json({ message: "this order was not offered to you" })
+        }
+        const rider = await User.findById(req.userId).select("role location locationUpdatedAt")
+        if (!rider || rider.role !== "deliveryBoy") {
+            return res.status(403).json({ message: "only delivery partners can accept orders" })
+        }
+        if (!riderLocationOk(rider)) {
+            return res.status(400).json({ message: "Turn on your location to accept orders" })
+        }
+        const ord = await Order.findById(assignment.order).select("deliveryAddress")
+        const kmAway = ord ? distanceKm(rider.location.coordinates[1], rider.location.coordinates[0], ord.deliveryAddress.latitude, ord.deliveryAddress.longitude) : Infinity
+        if (!(kmAway <= MAX_RIDER_KM)) {
+            return res.status(400).json({ message: `This order is more than ${MAX_RIDER_KM} km from you` })
         }
         const alreadyAssigned = await DeliveryAssignment.findOne({
             assignedTo: req.userId,
@@ -600,6 +644,16 @@ export const verifyDeliveryOtp = async (req, res) => {
         shopOrder.deliveryOtp = null
         shopOrder.otpExpires = null
         await order.save()
+        if (shopOrder.assignedDeliveryBoy) {
+            try {
+                const shopDoc = await Shop.findById(shopOrder.shop).select("name")
+                await Earning.updateOne(
+                    { shopOrderId: shopOrder._id },
+                    { $setOnInsert: { rider: shopOrder.assignedDeliveryBoy, order: order._id, shopOrderId: shopOrder._id, shopName: shopDoc?.name || "", amount: DELIVERY_FEE, deliveredAt: new Date() } },
+                    { upsert: true }
+                )
+            } catch (e) { console.error("earning credit error", e.message) }
+        }
         await DeliveryAssignment.deleteOne({
             shopOrderId: shopOrder._id,
             order: order._id,

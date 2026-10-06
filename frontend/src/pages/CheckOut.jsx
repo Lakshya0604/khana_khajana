@@ -37,7 +37,9 @@ const CheckOut = () => {
     const [paymentMethod, setPaymentMethod] = useState("cod")
     const [loading, setLoading] = useState(false)
     const dispatch = useDispatch()
-    const deliveryFee = totalAmount > 500 ? 0 : 40
+    // Flat Rs 40 per restaurant delivery (the server computes the same amount)
+    const shopCount = new Set((cartItems || []).map(i => String(i.shop))).size || 1
+    const deliveryFee = 40 * shopCount
     const amountWithDeliveryFee = totalAmount + deliveryFee
     const onDragEnd = (e) => {
         const { lat, lng } = e.target._latlng
@@ -208,8 +210,8 @@ const CheckOut = () => {
                             <span>₹{totalAmount}</span>
                         </div>
                         <div className='flex justify-between text-gray-700'>
-                            <span>Delivery Fee</span>
-                            <span>{deliveryFee == 0 ? "Free" : `₹${deliveryFee}`}</span>
+                            <span>Delivery Fee{shopCount > 1 ? ` (₹40 x ${shopCount} restaurants)` : ""}</span>
+                            <span>₹{deliveryFee}</span>
 
                         </div>
                         <div className='flex justify-between text-lg font-bold text-[#ff4d2d] pt-1'>

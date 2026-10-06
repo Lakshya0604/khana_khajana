@@ -32,6 +32,8 @@ const userSchema = new mongoose.Schema({
     otpExpires: {
         type: Date
     },
+    upiId: { type: String },
+    locationUpdatedAt: { type: Date },
     socketId: {
         type: String,
     },

@@ -23,6 +23,7 @@ export const socketHandler = (io) => {
                         type: 'Point',
                         coordinates: [longitude, latitude]
                     },
+                    locationUpdatedAt: new Date(),
                     isOnline: true,
                     socketId: socket.id
                 })
