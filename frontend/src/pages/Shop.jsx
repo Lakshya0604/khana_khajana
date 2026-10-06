@@ -12,7 +12,7 @@ import { FaArrowLeft } from "react-icons/fa6";
 function Shop() {
     const { shopId } = useParams()
     const [items, setItems] = useState([])
-    const [shop, setShop] = useState([])
+    const [shop, setShop] = useState(null)
     const navigate = useNavigate()
     const handleShop = async () => {
         try {
@@ -48,13 +48,13 @@ function Shop() {
 
             </div>}
 
-            <div className='max-w-7xl mx-auto px-6 py-10'>
+            <div className='max-w-7xl mx-auto px-3 sm:px-6 py-10'>
                 <h2 className='flex items-center justify-center gap-3 text-3xl font-bold mb-10 text-gray-800'><FaUtensils color='red' />Our Menu</h2>
 
                 {items.length > 0 ? (
-                    <div className='flex flex-wrap justify-center gap-8'>
+                    <div className='grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-3 sm:gap-8'>
                         {items.map((item) => (
-                            <FoodCard data={item} />
+                            <FoodCard data={item} key={item._id} />
                         ))}
                     </div>
                 ) : <p className='text-center text-gray-500 text-lg'>No Items Available</p>

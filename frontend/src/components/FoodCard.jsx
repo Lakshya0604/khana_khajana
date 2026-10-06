@@ -17,7 +17,7 @@ const FoodCard = ({ data }) => {
         const stars = [];
         for (let i = 1; i <= 5; i++) {
             stars.push(
-                (i <= rating) ? (<FaStar className='text-amber-300 text-lg' />) : (<FaRegStar className='text-amber-300 text-lg' />)
+                (i <= rating) ? (<FaStar key={i} className='text-amber-300 text-lg' />) : (<FaRegStar key={i} className='text-amber-300 text-lg' />)
             )
         }
         return stars
@@ -32,7 +32,7 @@ const FoodCard = ({ data }) => {
     }
 
     return (
-        <div className='w-full max-w-[250px] sm:w-[250px] rounded-2xl border-1 border-[#ff4d2d] bg-white shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col'>
+        <div className='w-full max-w-[250px] sm:w-[250px] rounded-2xl border border-[#ff4d2d] bg-white shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col'>
             <div className='relative w-full h-[170px] flex justify-center items-center bg-white'>
                 <div className='absolute top-3 right-3 bg-gray-100 rounded-full p-1 shadow'>
                     {data.foodType == "veg" ? <IoIosLeaf className='text-green-400' /> : <GiRoastChicken className='text-red-500' />}
@@ -46,14 +46,14 @@ const FoodCard = ({ data }) => {
                     <span className='text-xs text-gray-500'>{data.rating?.count || 0}</span>
                 </div>
             </div>
-            <div className='flex items-center justify-between mt-auto  p-3'>
-                <span className='font-bold text-gray-900 text-lg'>
+            <div className='flex flex-wrap items-center justify-between gap-2 mt-auto p-3'>
+                <span className='font-bold text-gray-900 text-base sm:text-lg'>
                     ₹{data.price}
                 </span>
-                <div className='flex m-1 items-center border rounded-full overflow-hidden shadow-sm'>
+                <div className='flex items-center border border-gray-300 rounded-full overflow-hidden shadow-sm'>
                     <button className='px-2 py-1 hover:bg-gray-100 transition' onClick={handleDecrease}><FaMinus size={12} />
                     </button>
-                    <span>{quantity}</span>
+                    <span className='min-w-[18px] text-center text-sm'>{quantity}</span>
                     <button className='px-2 py-1 hover:bg-gray-100 transition' onClick={handleIncrease}><FaPlus size={12} />
                     </button>
                     <button className={`${cartItems.some(i => i.id === data._id) ? "bg-gray-800" : "bg-[#ff4d2d]"} text-white px-3 py-2 transition-colors`} onClick={() => {
@@ -65,7 +65,7 @@ const FoodCard = ({ data }) => {
                             shop: data.shop,
                             quantity,
                             foodType: data.foodType
-                        })) : "null"
+                        })) : null
                     }}><IoCart /></button>
                 </div>
             </div>

@@ -56,3 +56,17 @@ export const getShopByCity = async (req, res) => {
         return res.status(500).json({ message: `get shop by city  error ${error}` })
     }
 }
+
+// Public contact for "Order on WhatsApp": only shop name and the owner's mobile number
+export const getShopWhatsapp = async (req, res) => {
+    try {
+        const { shopId } = req.params
+        const shop = await Shop.findById(shopId).populate("owner", "mobile")
+        if (!shop) {
+            return res.status(404).json({ message: "shop not found" })
+        }
+        return res.status(200).json({ name: shop.name, mobile: shop.owner?.mobile || null })
+    } catch (error) {
+        return res.status(500).json({ message: `get shop whatsapp error ${error}` })
+    }
+}

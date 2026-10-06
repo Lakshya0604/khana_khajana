@@ -18,10 +18,12 @@ import { ClipLoader } from 'react-spinners';
 
 
 function RecenterMap({ location }) {
-    if (location.lat && location.lon) {
-        const map = useMap()
-        map.setView([location.lat, location.lon], 16, { animate: true })
-    }
+    const map = useMap()
+    useEffect(() => {
+        if (location?.lat && location?.lon) {
+            map.setView([location.lat, location.lon], 16, { animate: true })
+        }
+    }, [location?.lat, location?.lon, map])
     return null
 }
 
@@ -134,9 +136,9 @@ const CheckOut = () => {
 
     }, [address])
     return (
-        <div className='min-h-screen bg-[#fff9f6] flex items-center justify-center p-6'>
-            <div className='absolute top-[20px] left-[20px]  z-[10px]' onClick={() => navigate("/cart")}><IoArrowBack size={25} className='text-[#ff4d2d]' /></div>
-            <div className='w-full max-w-[900px] bg-white rounded-2xl shadow-xl p-6 space-y-6'>
+        <div className='min-h-screen bg-[#fff9f6] flex items-center justify-center p-3 sm:p-6'>
+            <div className='absolute top-[20px] left-[20px] z-10 cursor-pointer' onClick={() => navigate("/cart")}><IoArrowBack size={25} className='text-[#ff4d2d]' /></div>
+            <div className='w-full max-w-[900px] bg-white rounded-2xl shadow-xl p-4 sm:p-6 mt-10 sm:mt-0 space-y-6'>
                 <h1 className='text-3xl font-bold text-gray-600'>Check Out</h1>
                 <section>
                     <h2 className='text-lg font-semibold mb-2 flex items-center gap-2 text-gray-700'><FaLocationDot className='text-[#ff4d2d]' />
@@ -150,13 +152,13 @@ const CheckOut = () => {
                     </div>
                     <div className='rounded-xl border overflow-hidden '>
                         <div className='h-64 w-full flex items-center justify-center'>
-                            <MapContainer className='w-full h-full' center={[location?.lat, location?.lon]} zoom={16}>
+                            <MapContainer className='w-full h-full' center={[location?.lat ?? 20.5937, location?.lon ?? 78.9629]} zoom={16}>
                                 <TileLayer
                                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                 />
                                 <RecenterMap location={location} />
-                                <Marker position={[location?.lat, location?.lon]} draggable eventHandlers={{ dragend: onDragEnd }}></Marker>
+                                {location?.lat && location?.lon && <Marker position={[location.lat, location.lon]} draggable eventHandlers={{ dragend: onDragEnd }}></Marker>}
                             </MapContainer>
                         </div>
                     </div>
@@ -184,7 +186,7 @@ const CheckOut = () => {
                                 <FaCreditCard className='text-blue-700 text-lg' />
                             </span>
                             <div>
-                                <p className='font-medium text-gray-800'>UPI / Creadit / Debit Card</p>
+                                <p className='font-medium text-gray-800'>UPI / Credit / Debit Card</p>
                                 <p className='text-xs text-gray-500'>Pay Securely Online</p>
                             </div>
                         </div>
@@ -196,18 +198,18 @@ const CheckOut = () => {
                     <div className='rounded-xl border bg-gray-50 p-4 space-y-2'>
                         {cartItems.map((item, index) => (
                             <div key={index} className='flex justify-between text-sm text-gray-700'>
-                                <span>{item.name}x{item.quantity}</span>
+                                <span>{item.name} x {item.quantity}</span>
                                 <span>₹{item.price * item.quantity}</span>
                             </div>
                         ))}
                         <hr className='border-gray-200 my-2' />
                         <div className='flex justify-between font-medium text-gray-800'>
                             <span>SubTotal</span>
-                            <span>{totalAmount}</span>
+                            <span>₹{totalAmount}</span>
                         </div>
                         <div className='flex justify-between text-gray-700'>
                             <span>Delivery Fee</span>
-                            <span>{deliveryFee == 0 ? "free" : deliveryFee}</span>
+                            <span>{deliveryFee == 0 ? "Free" : `₹${deliveryFee}`}</span>
 
                         </div>
                         <div className='flex justify-between text-lg font-bold text-[#ff4d2d] pt-1'>
@@ -216,7 +218,7 @@ const CheckOut = () => {
                         </div>
                     </div>
                 </section>
-                <button className='w-full bg-[#ff4d2d] hover:[#e64526] text-white py-3 rounded-xl font-semibold'
+                <button className='w-full bg-[#ff4d2d] hover:bg-[#e64526] text-white py-3 rounded-xl font-semibold'
                     onClick={handlePlaceOrder}>
                     {loading ? (<ClipLoader size={20} color='#ffffff' />) : (paymentMethod == "cod" ? "Place Order" : "Pay & Place Order")}
 

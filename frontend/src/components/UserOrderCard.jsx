@@ -40,7 +40,7 @@ const UserOrderCard = ({ data }) => {
                 <div className='text-right'>
                     {data.paymentMethod == "cod" ? <p className='text-sm text-gray-500'>{data.paymentMethod?.toUpperCase()}</p> : <p className='text-sm text-gray-500'>Payment: {data.payment ? "true" : "false"}</p>}
 
-                    <p className='font-medium text-blue-600'>{data.shopOrders?.[0].status}</p>
+                    <p className='font-medium text-blue-600'>{data.shopOrders?.[0]?.status}</p>
 
                 </div>
             </div>
@@ -57,7 +57,7 @@ const UserOrderCard = ({ data }) => {
                                 {shopOrder.status == "delivered" && <div className='flex space-x-1 mt-2'>
                                     {
                                         [1, 2, 3, 4, 5].map((star) => (
-                                            <button className={`text-lg ${selectedRating[item.item._id] >= star ? 'text-yellow-400' : 'text-gray-400'}`} onClick={() => handleRating(item.item._id, star)}>★</button>
+                                            <button key={star} className={`text-lg ${selectedRating[item.item._id] >= star ? 'text-yellow-400' : 'text-gray-400'}`} onClick={() => handleRating(item.item._id, star)}>★</button>
                                         ))
                                     }
 

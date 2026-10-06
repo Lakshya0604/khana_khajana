@@ -149,14 +149,14 @@ const Nav = () => {
                     {userData?.role === "owner" && (
                         <>
                             {myShopData && <>
-                                <button className='w-7 h-7 flex items-center justify-center rounded-lg bg-[#ff4d2d]/10 text-amber-500 gap-1 cursor-pointer' onClick={() => navigate("/add-item")}>
-                                    <FaPlus size={18} />
+                                <button className='w-9 h-9 flex items-center justify-center rounded-lg bg-[#ff4d2d]/10 text-amber-500 gap-1 cursor-pointer' onClick={() => navigate("/add-item")}>
+                                    <FaPlus size={16} />
                                 </button>
 
 
                             </>}
-                            <div className='relative flex items-center justify-between gap-1 p-0 cursor-pointer rounded-full bg-[#ff4d2d]/10 text-amber-700'><LuReceiptIndianRupee size={20} onClick={() => navigate("/my-orders")} />
-                            </div>
+                            <button className='w-9 h-9 flex items-center justify-center rounded-lg bg-[#ff4d2d]/10 text-amber-700' onClick={() => navigate("/my-orders")}><LuReceiptIndianRupee size={20} />
+                            </button>
 
                         </>
                     )}
@@ -170,8 +170,8 @@ const Nav = () => {
                             >
                                 {searchOpen ? <RiCloseLine size={18} /> : <CiSearch size={18} />}
                             </button>
-                            <button className='relative w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600'>
-                                <IoCartOutline className='cursor-pointer' size={18} onClick={() => navigate("/cart")} />
+                            <button className='relative w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600' onClick={() => navigate("/cart")}>
+                                <IoCartOutline className='cursor-pointer' size={18} />
                                 <span className='absolute -top-1 -right-1 bg-[#ff4d2d] text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full'>{cartItems.length}</span>
                             </button>
                         </>
@@ -179,7 +179,7 @@ const Nav = () => {
 
                     {/* Avatar (always visible) */}
                     <div className='w-9 h-9 rounded-full text-white bg-orange-400 flex items-center justify-center cursor-pointer font-medium text-sm'
-                        onClick={() => setShowInfo(prev => !prev)}
+                        onClick={() => setMenuOpen(prev => !prev)}
                     >
                         {userData?.fullname?.slice(0, 1)?.toUpperCase()}
                     </div>
@@ -220,6 +220,11 @@ const Nav = () => {
             {/* Mobile Menu Dropdown */}
             {menuOpen && (
                 <div className='md:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-2'>
+                    {userData?.role !== "owner" && (
+                        <div className='text-[15px] font-semibold text-emerald-500 pb-2 border-b border-gray-100'>
+                            {userData?.fullname}
+                        </div>
+                    )}
                     {userData?.role === "user" && (
                         <>
                             <button className='flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-sm font-medium text-orange-400 w-full text-left' onClick={() => navigate("/my-orders")}>

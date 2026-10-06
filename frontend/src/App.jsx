@@ -67,7 +67,7 @@ function App() {
       <Route path='/track-order/:orderId' element={userData ? <TrackOrderPage /> : <Navigate to={"/signin"} />} />
       <Route path='/shop/:shopId' element={userData ? <Shop /> : <Navigate to={"/signin"} />} />
 
-
+      <Route path='*' element={<Navigate to={"/"} replace />} />
     </Routes>
   )
 }

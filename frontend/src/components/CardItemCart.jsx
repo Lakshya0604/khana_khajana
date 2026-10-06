@@ -19,16 +19,16 @@ const CardItemCart = ({ data }) => {
     }
 
     return (
-        <div className='flex items-center justify-between bg-white p-6 rounded-xl shadow border'>
-            <div className='flex items-center gap-4'>
-                <img src={data.image} alt="" className='w-30 h-30 object-cover rounded-lg border' />
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-6 rounded-xl shadow border border-gray-200'>
+            <div className='flex items-center gap-3 sm:gap-4 min-w-0'>
+                <img src={data.image} alt="" className='w-20 h-20 sm:w-28 sm:h-28 shrink-0 object-cover rounded-lg border' />
                 <div>
-                    <h1 className='font-medium text-gray-700'>{data.name}</h1>
-                    <p className='font-medium flex text-gray-500'><FaIndianRupeeSign size={12} className='mb-0 mt-2 gap-2 text-gray-500' />{data.price}X{data.quantity}</p>
+                    <h1 className='font-medium text-gray-700 break-words'>{data.name}</h1>
+                    <p className='font-medium flex text-gray-500'><FaIndianRupeeSign size={12} className='mb-0 mt-2 gap-2 text-gray-500' />{data.price} x {data.quantity}</p>
                     <p className='flex gap-1 font-bold text-green-600' > <FaIndianRupeeSign size={12} className='mb-0 mt-2 gap-2 text-green-400' /> {data.price * data.quantity}</p>
                 </div>
             </div>
-            <div className='flex items-center gap-3'>
+            <div className='flex items-center justify-end gap-3 self-end sm:self-auto'>
 
                 <button className='p-1 bg-gray-100 rounded-full hover:bg-gray-200' onClick={() => handleDecrease(data.id, data.quantity)} ><FaMinus size={12} />
                 </button>
