@@ -44,8 +44,8 @@ export const seedListings = async () => {
             cuisines: l.cuisines, menuSource: l.items.length ? l.source : undefined
         }
         let shop = await Shop.findOne({ listingSource: l.source })
-        if (shop) { Object.assign(shop, fields); await shop.save() }
-        else shop = await Shop.create(fields)
+        if (shop) continue // already seeded: never rebuild items (keeps item IDs stable)
+        shop = await Shop.create(fields)
         await Item.deleteMany({ shop: shop._id })
         const docs = await Item.insertMany(l.items.map(i => ({
             name: i.name, image: IMG, shop: shop._id, price: i.price,
