@@ -31,7 +31,7 @@ export const seedListings = async () => {
     if (!owner) {
         owner = await User.create({
             fullname: "Khana Khajana Listings",
-            email, role: "owner",
+            email, role: "owner", mobile: "0000000000",
             password: await bcrypt.hash(crypto.randomBytes(24).toString("hex"), 10)
         })
     }
