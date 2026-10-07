@@ -5,6 +5,7 @@ import { serverUrl } from '../App'
 import { IoArrowBack } from "react-icons/io5";
 import DeliveryBoyTracking from '../components/DeliveryBoyTracking';
 import { useSelector } from 'react-redux';
+import { subscribeOrderResync } from '../utils/orderResync';
 
 const TrackOrderPage = () => {
     const navigate = useNavigate()
@@ -14,17 +15,26 @@ const TrackOrderPage = () => {
     const [liveLocation, setLiveLocation] = useState({})
 
 
-    const handleGetOrder = async () => {
-        try {
-            const result = await axios.get(`${serverUrl}/api/order/get-order-by-id/${orderId}`, { withCredentials: true })
-            setCurrentOrder(result.data)
-        } catch (error) {
-            console.log(error)
-        }
-    }
-
     useEffect(() => {
-        if (!socket) return
+        let active = true
+        let requestId = 0
+        const handleGetOrder = async () => {
+            const id = ++requestId
+            try {
+                const result = await axios.get(`${serverUrl}/api/order/get-order-by-id/${orderId}`, { withCredentials: true })
+                if (active && id === requestId) {
+                    setCurrentOrder(result.data)
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        if (!socket?.connected) handleGetOrder()
+        const unsubscribe = subscribeOrderResync(socket, () => {
+            // Drop pre-disconnect locations; keep any new live events while fetching.
+            setLiveLocation({})
+            handleGetOrder()
+        })
         const handleLocation = ({ deliveryBoyId, latitude, longitude }) => {
             console.log("📍 live location received:", deliveryBoyId, latitude, longitude)
             setLiveLocation(prev => ({
@@ -38,18 +48,17 @@ const TrackOrderPage = () => {
                 handleGetOrder()
             }
         }
-        socket.on('updateDeliveryLocation', handleLocation)
-        socket.on('update-status', handleStatusUpdate)
+        socket?.on('updateDeliveryLocation', handleLocation)
+        socket?.on('update-status', handleStatusUpdate)
         return () => {
-            socket.off('updateDeliveryLocation', handleLocation)
-            socket.off('update-status', handleStatusUpdate)
+            active = false
+            unsubscribe()
+            socket?.off('updateDeliveryLocation', handleLocation)
+            socket?.off('update-status', handleStatusUpdate)
         }
     }, [socket, orderId])
 
 
-    useEffect(() => {
-        handleGetOrder()
-    }, [orderId])
     return (
         <div className='max-w-4xl mx-auto p-4 flex flex-col gap-6'>
             <div className='relative flex items-center gap-4 top-5 left-5 z-10 mb-2.5' onClick={() => navigate("/")}><IoArrowBack size={25} className='text-[#ff4d2d]' />
