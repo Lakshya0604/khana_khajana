@@ -1,29 +1,29 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import SignUp from './pages/SignUp'
-import SignIn from './pages/SignIn'
-import ForgotPassword from './pages/ForgotPassword'
+const SignUp = lazy(() => import('./pages/SignUp'))
+const SignIn = lazy(() => import('./pages/SignIn'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 import useGetCurrentUser from './hooks/useGetCurrentUser'
 import { useDispatch, useSelector } from 'react-redux'
-import Home from './pages/Home'
+const Home = lazy(() => import('./pages/Home'))
 import useGetCity from './hooks/useGetCity'
 import useGetMyShop from './hooks/useGetMyShop'
-import CreateEditShop from './pages/CreateEditShop'
-import AddItem from './pages/AddItem'
-import EditItem from './pages/EditItem'
+const CreateEditShop = lazy(() => import('./pages/CreateEditShop'))
+const AddItem = lazy(() => import('./pages/AddItem'))
+const EditItem = lazy(() => import('./pages/EditItem'))
 import useGetShopByCity from './hooks/useGetShopByCity'
 import useGetItemsByCity from './hooks/useGetItemsByCity'
-import CartPage from './pages/CartPage'
-import CheckOut from './pages/CheckOut'
-import OrderPlaced from './pages/OrderPlaced'
-import MyOrders from './pages/MyOrders'
+const CartPage = lazy(() => import('./pages/CartPage'))
+const CheckOut = lazy(() => import('./pages/CheckOut'))
+const OrderPlaced = lazy(() => import('./pages/OrderPlaced'))
+const MyOrders = lazy(() => import('./pages/MyOrders'))
 import useGetMyOrders from './hooks/useGetMyOrders'
 import useUpdateLocation from './hooks/useUpdateLocation'
-import TrackOrderPage from './pages/TrackOrderPage'
-import Shop from './pages/Shop'
-import Earnings from './pages/Earnings'
-import AdminPayouts from './pages/AdminPayouts'
-import AdminPage from './pages/AdminPage'
+const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'))
+const Shop = lazy(() => import('./pages/Shop'))
+const Earnings = lazy(() => import('./pages/Earnings'))
+const AdminPayouts = lazy(() => import('./pages/AdminPayouts'))
+const AdminPage = lazy(() => import('./pages/AdminPage'))
 import CityPicker from './components/CityPicker'
 import { io } from 'socket.io-client'
 import { setSocket } from './redux/userSlice'
@@ -60,7 +60,7 @@ function App() {
   useEffect(() => {
     const titles = { '/signin': 'Sign in', '/signup': 'Create account', '/forgot-password': 'Reset password', '/cart': 'Your cart', '/checkout': 'Checkout', '/my-orders': 'My orders', '/order-placed': 'Order placed', '/add-item': 'Add item', '/create-edit-shop': 'Your shop' }
     const t = titles[pathname]
-    document.title = t ? `${t} | Khana Khajana` : 'Khana Khajana Agra - Online Food Delivery from Local Restaurants'
+    document.title = t ? `${t} | Khana Khajana` : 'Khana Khajana Agra | Restaurants and food guides'
     const descs = {
       '/signin': 'Sign in to Khana Khajana to order food from local restaurants and track your delivery live.',
       '/signup': 'Create a free Khana Khajana account to order food online, or list your restaurant, or deliver orders.',
@@ -85,6 +85,7 @@ function App() {
   return (
     <>
     <CityPicker />
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">Loading page...</div>}>
     <Routes>
       <Route path='/signup' element={!userData ? <SignUp /> : <Navigate to={"/"} />} />
       <Route path='/signin' element={!userData ? <SignIn /> : <Navigate to={"/"} />} />
@@ -105,6 +106,7 @@ function App() {
 
       <Route path='*' element={<Navigate to={"/"} replace />} />
     </Routes>
+    </Suspense>
     </>
   )
 }
