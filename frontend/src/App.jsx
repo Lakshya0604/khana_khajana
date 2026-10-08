@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import SignUp from './pages/SignUp'
 import SignIn from './pages/SignIn'
 import ForgotPassword from './pages/ForgotPassword'
@@ -44,6 +44,7 @@ function App() {
 
 
   useEffect(() => {
+    if (!userData) return
     const socketInstance = io(serverUrl, { withCredentials: true })
     dispatch(setSocket(socketInstance))
     socketInstance.on("connect", () => {
@@ -67,13 +68,19 @@ function App() {
     }
     const d = descs[pathname]
     const setMeta = (sel, attr, val) => { const el = document.querySelector(sel); if (el) el.setAttribute(attr, val) }
-    if (d) setMeta('meta[name="description"]', 'content', d)
+    const description = d || 'Khana Khajana: browse restaurant and dish guides in Agra and other cities. Check current delivery availability before ordering.'
+    setMeta('meta[name="description"]', 'content', description)
+    setMeta('meta[property="og:description"]', 'content', description)
+    setMeta('meta[name="twitter:description"]', 'content', description)
+    setMeta('meta[name="twitter:title"]', 'content', document.title)
+    setMeta('meta[name="robots"]', 'content', pathname === '/' ? 'index, follow, max-image-preview:large' : 'noindex, follow')
     const base = 'https://khana-khajana-2ijn.onrender.com'
-    const url = base + (['/signin', '/signup', '/forgot-password'].includes(pathname) ? pathname : '/')
+    const url = base + pathname
     setMeta('link[rel="canonical"]', 'href', url)
     setMeta('meta[property="og:url"]', 'content', url)
     setMeta('meta[property="og:title"]', 'content', document.title)
   }, [pathname])
+  if (pathname === '/' && !userData) return <main className='min-h-screen bg-[#fff9f6] text-gray-800'><div className='max-w-5xl mx-auto px-5 py-8'><header className='flex flex-wrap gap-4 items-center justify-between border-b border-orange-100 pb-5'><span className='text-xl font-bold text-[#b7371b]'>Khana Khajana</span><Link to='/signin' className='bg-[#c43c1d] text-white px-5 py-3 rounded-lg font-semibold'>Open ordering app</Link></header><section className='py-12'><p className='text-[#b7371b] font-semibold mb-3'>Explore local food</p><h1 className='text-4xl sm:text-5xl font-bold leading-tight mb-6'>Food and restaurants in Agra.<br />More cities to explore.</h1><p className='text-lg text-gray-600 max-w-2xl mb-8'>Browse restaurant listings and dish guides without signing in. Find menu ideas, compare cuisines, and check current availability before you order.</p><div className='flex flex-wrap gap-4'><a href='/cities/agra/' className='bg-[#c43c1d] text-white px-5 py-3 rounded-lg font-semibold'>Explore Agra</a><a href='/browse/' className='border border-orange-300 px-5 py-3 rounded-lg font-semibold text-[#a32e16]'>Browse all cities</a></div></section><aside className='bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm leading-6'>This is a public catalogue, not a list of confirmed delivery partners. Menus and availability may have changed. Confirm directly with the restaurant. Online payments in the app currently run in test mode.</aside><section className='py-8'><h2 className='text-2xl font-bold mb-5'>Explore food in Agra</h2><div className='flex flex-wrap gap-4'>{['biryani','paneer','chicken','pizza','desserts'].map(name => <a key={name} href={'/cities/agra/dishes/'+name+'/'} className='bg-white border border-orange-100 rounded-lg px-5 py-3 capitalize'>{name}</a>)}</div></section><footer className='border-t border-orange-100 pt-5 text-sm text-gray-600'>Khana Khajana · Public restaurant catalogue and ordering app</footer></div></main>
   if (!authChecked) return <div className='min-h-screen flex items-center justify-center text-gray-400'>Loading...</div>
   return (
     <>
