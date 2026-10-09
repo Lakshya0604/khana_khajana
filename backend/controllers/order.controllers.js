@@ -253,7 +253,7 @@ export const getMyOrders = async (req, res) => {
         if (user.role === "user") {
             const orders = await Order.find({ user: req.userId })
                 .sort({ createdAt: -1 })
-                .populate("shopOrders.shop", "name")
+                .populate("shopOrders.shop", "name isListing")
                 .populate("shopOrders.owner", "name email mobile")
                 .populate("shopOrders.shopOrderItems.item", "name image price")
 
