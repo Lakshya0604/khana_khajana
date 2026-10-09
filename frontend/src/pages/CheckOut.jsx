@@ -7,6 +7,21 @@ import { TbCurrentLocation } from "react-icons/tb";
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import { useDispatch, useSelector } from 'react-redux';
 import "leaflet/dist/leaflet.css"
+import L from 'leaflet'
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+
+// Vite does not resolve Leaflet's default marker image paths, so the pin showed as a broken image. Use bundled files.
+const pinIcon = L.icon({
+    iconUrl: markerIcon,
+    iconRetinaUrl: markerIcon2x,
+    shadowUrl: markerShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+})
 import { setAddress, setLocation } from '../redux/mapSlice';
 import { MdDeliveryDining } from "react-icons/md";
 import { IoIosPhonePortrait } from "react-icons/io";
@@ -169,7 +184,7 @@ const CheckOut = () => {
                                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                 />
                                 <RecenterMap location={location} />
-                                {location?.lat && location?.lon && <Marker position={[location.lat, location.lon]} draggable eventHandlers={{ dragend: onDragEnd }}></Marker>}
+                                {location?.lat && location?.lon && <Marker position={[location.lat, location.lon]} icon={pinIcon} draggable eventHandlers={{ dragend: onDragEnd }}></Marker>}
                             </MapContainer>
                         </div>
                     </div>
