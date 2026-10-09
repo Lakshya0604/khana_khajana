@@ -125,7 +125,7 @@ export const placeOrder = async (req, res) => {
             shopOrders
         })
         await newOrder.populate("shopOrders.shopOrderItems.item", "name image price")
-        await newOrder.populate("shopOrders.shop", "name socketId")
+        await newOrder.populate("shopOrders.shop", "name socketId isListing")
         await newOrder.populate("user", "fullname name email mobile")
 
         const io = req.app.get('io')
@@ -162,7 +162,7 @@ const finalizePaid = async (order, paymentId, io) => {
     order.payment = true
     order.razorpayPaymentId = paymentId
     await order.save()
-    await order.populate("shopOrders.shop", "name socketId")
+    await order.populate("shopOrders.shop", "name socketId isListing")
     await order.populate("user", "fullname name email mobile")
     await order.populate("shopOrders.shopOrderItems.item", "name image price")
     if (io) {
