@@ -24,9 +24,26 @@ const pickCategory = (name, sec) => {
     return "Others"
 }
 
+// One dummy shop-owner account holds every listing restaurant, so orders to listing shops show up in its owner
+// dashboard. The address is deliberately synthetic: mail to it is redirected to the platform inbox (see utils/mail.js),
+// so the platform owner can set its password with "Forgot password" and sign in to handle listing orders.
+export const LISTINGS_OWNER_EMAIL = "listings.owner@example.com"
+const OLD_LISTINGS_OWNER_EMAIL = "listings@khana-khajana.invalid"
+export const ensureListingsOwner = async () => {
+    const current = await User.findOne({ email: LISTINGS_OWNER_EMAIL })
+    if (current) return current
+    const old = await User.findOne({ email: OLD_LISTINGS_OWNER_EMAIL })
+    if (!old) return null
+    old.email = LISTINGS_OWNER_EMAIL
+    await old.save()
+    console.log("[seed] listings owner email moved to", LISTINGS_OWNER_EMAIL)
+    return old
+}
+
 export const seedListings = async () => {
     const data = JSON.parse(fs.readFileSync(new URL("./listings.json", import.meta.url), "utf8"))
-    const email = "listings@khana-khajana.invalid"
+    const email = LISTINGS_OWNER_EMAIL
+    await ensureListingsOwner()
     let owner = await User.findOne({ email })
     if (!owner) {
         owner = await User.create({
