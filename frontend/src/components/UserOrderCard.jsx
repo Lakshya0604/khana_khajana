@@ -47,6 +47,11 @@ const UserOrderCard = ({ data }) => {
             {data.shopOrders.map((shopOrder, index) => (
                 <div className="border rounded-lg p-3 bg-[#fffaf7] space-y-3" key={index}>
                     <p>{shopOrder.shop.name}</p>
+                    {shopOrder.shop.isListing && (
+                        <p className='text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded px-2 py-1'>
+                            Listing only: this restaurant is not registered on Khana Khajana yet. Our team will contact them to confirm your order.
+                        </p>
+                    )}
                     <div className='flex space-x-4 overflow-x-auto pb-2'>
                         {shopOrder.shopOrderItems.map((item, index) => (
                             <div key={index} className='flex-shrink-0 w-40 border rounded-lg p-2 bg-white'>
