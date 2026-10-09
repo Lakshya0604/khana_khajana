@@ -13,7 +13,7 @@ import { IoIosPhonePortrait } from "react-icons/io";
 import { FaCreditCard } from "react-icons/fa";
 import axios from 'axios';
 import { serverUrl } from '../App';
-import { addMyOrder } from '../redux/userSlice';
+import { addMyOrder, clearCart } from '../redux/userSlice';
 import { ClipLoader } from 'react-spinners';
 
 
@@ -93,6 +93,7 @@ const CheckOut = () => {
             if (paymentMethod == 'cod') {
 
                 dispatch(addMyOrder(result.data))
+                dispatch(clearCart())
                 navigate("/order-placed")
             } else {
                 const orderId = result.data.orderId
@@ -128,6 +129,7 @@ const CheckOut = () => {
                         orderId
                     }, { withCredentials: true })
                     dispatch(addMyOrder(result.data))
+                dispatch(clearCart())
                     navigate("/order-placed")
                 } catch (error) {
                     console.log(error)
