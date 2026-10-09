@@ -49,6 +49,7 @@ app.use("/api/admin", adminRouter)
 socketHandler(io)
 server.listen(port, () => {
     Promise.resolve(connectDb()).then(async () => {
+        try { const { ensureListingsOwner } = await import('./seed/seedListings.js'); await ensureListingsOwner() } catch (e) { console.log('[listings-owner] failed', e.message) }
         if (process.env.CLEANUP_QA === '1') {
             try { const { cleanupQa } = await import('./seed/seedListings.js'); await cleanupQa() } catch (e) { console.log('[cleanup] failed', e.message) }
         }
