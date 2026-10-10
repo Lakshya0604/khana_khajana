@@ -17,6 +17,8 @@ import { socketHandler } from "./socket.js";
 const app = express();
 const server = http.createServer(app);
 
+app.get("/health", (req, res) => res.status(200).send("ok"));
+
 const allowedOrigins = [
     "https://khana-khajana-2ijn.onrender.com",
     "http://localhost:5173"
