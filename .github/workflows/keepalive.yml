@@ -1,0 +1,1 @@
+{"name":"keepalive","on":{"schedule":[{"cron":"*/10 2-17 * * *"}],"workflow_dispatch":{}},"jobs":{"ping":{"runs-on":"ubuntu-latest","steps":[{"run":"curl -fsS -m 90 https://khana-khajana-backend-pp6z.onrender.com/health"}]}}}
