@@ -167,6 +167,7 @@ const Nav = () => {
                         <>
                             <button
                                 onClick={() => setSearchOpen(!searchOpen)}
+                                aria-label={searchOpen ? 'Close search' : 'Open search'}
                                 className='w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 cursor-pointer'
                             >
                                 {searchOpen ? <RiCloseLine size={18} /> : <CiSearch size={18} />}
@@ -188,6 +189,7 @@ const Nav = () => {
                     {/* Hamburger */}
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
+                        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
                         className='w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600'
                     >
                         {menuOpen ? <RiCloseLine size={18} /> : <HiOutlineMenuAlt3 size={18} />}
