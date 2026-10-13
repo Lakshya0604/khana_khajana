@@ -32,3 +32,10 @@
   html { scroll-behavior: auto; }
   *, ::before, ::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* accessibility: brand orange darkened slightly so white-on-orange and orange-on-white text reach 4.5:1 contrast */
+.text-\[\#ff4d2d\] { color: #d23517; }
+.bg-\[\#ff4d2d\] { background-color: #d23517; }
+.hover\:bg-\[\#e64526\]:hover, .hover\:bg-\[\#e64323\]:hover { background-color: #b82d12; }
+.bg-\[\#e64526\], .bg-\[\#e64323\] { background-color: #b82d12; }
+.text-blue-500 { color: #1d4ed8; }
