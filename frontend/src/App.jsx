@@ -74,7 +74,7 @@ function App() {
     setMeta('meta[name="twitter:description"]', 'content', description)
     setMeta('meta[name="twitter:title"]', 'content', document.title)
     setMeta('meta[name="robots"]', 'content', pathname === '/' ? 'index, follow, max-image-preview:large' : 'noindex, follow')
-    const base = 'https://khana-khajana-2ijn.onrender.com'
+    const base = 'https://khana-khajana-c4281.web.app'
     const url = base + pathname
     setMeta('link[rel="canonical"]', 'href', url)
     setMeta('meta[property="og:url"]', 'content', url)
