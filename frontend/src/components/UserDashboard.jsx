@@ -68,7 +68,7 @@ const UserDashboard = () => {
                     <span className='hidden sm:inline text-sm text-gray-400'>Popular picks</span>
                 </div>
                 <div className='w-full rounded-2xl bg-gradient-to-r from-[#fff7f4] to-white p-2 sm:p-3 shadow-sm border border-orange-100'>
-                    <div className='w-full flex overflow-x-auto gap-2 sm:gap-3 pb-2 scrollbar-thin scrollbar-thumb-[#ff4d2d] scrollbar-track-transparent scroll-smooth mt-0'>
+                    <div tabIndex={0} className='w-full flex overflow-x-auto gap-2 sm:gap-3 pb-2 scrollbar-thin scrollbar-thumb-[#ff4d2d] scrollbar-track-transparent scroll-smooth mt-0'>
                         {categories.map((cate, index) => (
                             <div className='flex-shrink-0' key={index}>
                                 <div className={activeCategory === cate.category ? 'rounded-xl ring-2 ring-[#ff4d2d]' : ''}><CategaoryCard name={cate.category} image={cate.image} onClick={() => handleFilterByCategory(cate.category)} /></div>
@@ -89,7 +89,7 @@ const UserDashboard = () => {
                     {shopsLoading ? (
                         <Spinner label='Loading restaurants...' className='py-6' />
                     ) : hasShops ? (
-                        <div className='w-full flex overflow-x-auto gap-3 sm:gap-4 pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#ff4d2d] scrollbar-track-transparent scroll-smooth'>
+                        <div tabIndex={0} className='w-full flex overflow-x-auto gap-3 sm:gap-4 pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#ff4d2d] scrollbar-track-transparent scroll-smooth'>
                             {shopsInMyCity.map((shop, index) => (
                                 <div className='snap-start flex-shrink-0' key={shop._id || index}>
                                     <CategaoryCard name={shop.name} image={shop.image} onClick={() => navigate(`/shop/${shop._id}`)} />
@@ -115,7 +115,7 @@ const UserDashboard = () => {
                 {[['all', 'All'], ['veg', 'Veg'], ['nonveg', 'Non-veg']].map(([v, label]) => (
                     <button key={v} onClick={() => setDiet(v)} className={`px-3 py-1.5 rounded-full text-sm border ${diet === v ? 'bg-[#ff4d2d] text-white border-[#ff4d2d]' : 'bg-white text-gray-700 border-gray-300'}`}>{label}</button>
                 ))}
-                <select value={sort} onChange={(e) => setSort(e.target.value)} className='ml-auto px-3 py-1.5 rounded-full text-sm border border-gray-300 bg-white text-gray-700'>
+                <select aria-label='Sort food items' value={sort} onChange={(e) => setSort(e.target.value)} className='ml-auto px-3 py-1.5 rounded-full text-sm border border-gray-300 bg-white text-gray-700'>
                     <option value='default'>Sort: Relevance</option>
                     <option value='low'>Price: Low to High</option>
                     <option value='high'>Price: High to Low</option>
