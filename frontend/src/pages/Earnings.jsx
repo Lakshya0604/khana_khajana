@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
 import { serverUrl } from '../App'
+import { loadRazorpay } from '../utils/loadRazorpay'
 
 const Earnings = () => {
     const navigate = useNavigate()
@@ -32,6 +33,7 @@ const Earnings = () => {
             const d = r.data
             if (d.razorOrder) {
                 const k = await axios.get(`${serverUrl}/api/order/razorpay-key`, { withCredentials: true })
+                await loadRazorpay()
                 const rzp = new window.Razorpay({
                     key: k.data.keyId, amount: d.razorOrder.amount, currency: "INR", name: "Khana Khajana", description: "COD cash deposit", order_id: d.razorOrder.id,
                     handler: async (resp) => {
