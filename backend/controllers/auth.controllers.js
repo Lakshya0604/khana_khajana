@@ -46,10 +46,11 @@ export const signUp = async (req, res) => {
             secure: true,
             sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            httpOnly: true
+            httpOnly: true,
+            partitioned: true
         })
         user.password = undefined;
-        return res.status(201).json(await clientUser(user));
+        return res.status(201).json({ ...(await clientUser(user)), token });
     } catch (error) {
         return res.status(500).json(`signup error ${error}`)
     }
@@ -75,10 +76,11 @@ export const signIn = async (req, res) => {
             secure: true,
             sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            httpOnly: true
+            httpOnly: true,
+            partitioned: true
         })
         user.password = undefined;
-        return res.status(200).json(await clientUser(user));
+        return res.status(200).json({ ...(await clientUser(user)), token });
 
     } catch (error) {
         return res.status(500).json(`sign in error ${error}`)
@@ -90,7 +92,8 @@ export const signOut = async (req, res) => {
         res.clearCookie("token", {
             httpOnly: true,
             secure: true,
-            sameSite: "none"
+            sameSite: "none",
+            partitioned: true
         })
         // ab clearCookie ke options bilkul same hain jo cookie set karte
         // waqt diye the — isliye browser isko sahi se match karke delete karega
@@ -181,9 +184,10 @@ export const googleAuth = async (req, res) => {
             secure: true,
             sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            httpOnly: true
+            httpOnly: true,
+            partitioned: true
         })
-        return res.status(200).json(await clientUser(user));
+        return res.status(200).json({ ...(await clientUser(user)), token });
     } catch (error) {
         return res.status(500).json({ message: `Google Auth error${error}` })
 
