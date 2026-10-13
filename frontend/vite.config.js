@@ -12,7 +12,7 @@ function publicCatalogue() {
     configResolved(config) { outDir = path.resolve(config.root, config.build.outDir) },
     closeBundle() {
       const listings = JSON.parse(fs.readFileSync(new URL('../backend/seed/listings.json', import.meta.url), 'utf8'))
-      const base = 'https://khana-khajana-2ijn.onrender.com'
+      const base = 'https://khana-khajana-c4281.web.app'
       const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
       const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
       const cities = [...new Set(listings.map(r => r.city))].sort((a,b) => a === 'Agra' ? -1 : b === 'Agra' ? 1 : a.localeCompare(b))
