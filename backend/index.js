@@ -21,6 +21,8 @@ app.get("/health", (req, res) => res.status(200).send("ok"));
 
 const allowedOrigins = [
     "https://khana-khajana-2ijn.onrender.com",
+    "https://khana-khajana-c4281.web.app",
+    "https://khana-khajana-c4281.firebaseapp.com",
     "http://localhost:5173"
 ]
 const io = new Server(server, {
