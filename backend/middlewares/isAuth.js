@@ -2,7 +2,8 @@ import jwt from "jsonwebtoken"
 import User from "../models/user.model.js"
 const isAuth = async (req, res, next) => {
     try {
-        const token = req.cookies.token
+        const bearer = (req.headers.authorization || "").startsWith("Bearer ") ? req.headers.authorization.slice(7) : null
+        const token = req.cookies.token || bearer
         if (!token) {
             return res.status(401).json({ message: "token not found" })
         }
