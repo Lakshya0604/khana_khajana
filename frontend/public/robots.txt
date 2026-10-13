@@ -9,4 +9,4 @@ Disallow: /add-item
 Disallow: /edit-item/
 Disallow: /create-edit-shop
 
-Sitemap: https://khana-khajana-2ijn.onrender.com/sitemap.xml
+Sitemap: https://khana-khajana-c4281.web.app/sitemap.xml
