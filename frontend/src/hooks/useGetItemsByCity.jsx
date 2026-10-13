@@ -6,10 +6,11 @@ import { setItemsInMyCity } from '../redux/userSlice'
 
 function useGetItemsByCity() {
     const dispatch = useDispatch()
-    const { city } = useSelector(state => state.user)
+    const { city, userData } = useSelector(state => state.user)
+    const uid = userData?._id
 
     useEffect(() => {
-        if (!city?.trim()) {
+        if (!city?.trim() || !uid) {
             dispatch(setItemsInMyCity(null))
             return
         }
@@ -26,7 +27,7 @@ function useGetItemsByCity() {
         }
 
         fetchItems()
-    }, [city, dispatch])
+    }, [city, uid, dispatch])
 }
 
 export default useGetItemsByCity
