@@ -32,7 +32,9 @@ createRoot(document.getElementById('root')).render(
 
   <BrowserRouter>
     <Provider store={store}>
-      <App />
+      <main>
+        <App />
+      </main>
     </Provider>
   </BrowserRouter>
 
