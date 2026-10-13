@@ -8,6 +8,7 @@ import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import { useDispatch, useSelector } from 'react-redux';
 import "leaflet/dist/leaflet.css"
 import L from 'leaflet'
+import { loadRazorpay } from '../utils/loadRazorpay'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
@@ -123,6 +124,7 @@ const CheckOut = () => {
     }
 
     const openRazorpayWindow = async (orderId, razorOrder) => {
+        try { await loadRazorpay() } catch (e) { console.log(e) }
         let keyId = import.meta.env.VITE_RAZORPAY_KEY_ID
         try {
             const k = await axios.get(`${serverUrl}/api/order/razorpay-key`, { withCredentials: true })
